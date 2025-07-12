@@ -1,0 +1,17 @@
+streamlit
+pytesseract
+pandas
+pyttsx3
+re
+PyMuPDF
+pdf2image
+fuzzywuzzy
+googletrans==4.0.0-rc1
+Pillow
+base64
+yagmail
+streamlit-webrtc
+speechrecognition
+numpy
+opencv-python
+python-dotenv
