@@ -280,7 +280,7 @@ def process_resumes(uploaded_files):
             "Location": location,
             "Interview Score": score,
             "Rating": get_rating(score),
-            "Summary": summary
+            "Summary": summary,
             "Date Uploaded": datetime.now().strftime("%Y-%m-%d")
         })
 
