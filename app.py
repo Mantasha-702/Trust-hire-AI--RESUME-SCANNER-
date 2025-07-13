@@ -183,9 +183,9 @@ def extract_phone(text):
     return match.group(0) if match else "Not found"
 
 def extract_education(text):
-    degrees = ["B.Tech", "M.Tech", "B.E", "M.E", "B.Sc", "M.Sc", "Diploma", "Bachelor", "Master"]
+    keywords = ["B.Tech", "B.E", "MCA", "BSc", "M.Tech", "BCA", "M.Sc", "PhD", "Bachelor", "Master", "Diploma"]
     found = [kw for kw in keywords if re.search(rf"\b{re.escape(kw)}\b", text, re.IGNORECASE)]
-    return ", ".join(found) if found else "Not Mentioned"
+    return ", ".join(set(found)) if found else "Not Mentioned"
 
 def extract_skills(text):
     keywords = ["Python", "Java", "C++", "Django", "Flask", "Pandas", "NumPy", "SQL", "HTML", "CSS", "JavaScript", "Git"]
