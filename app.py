@@ -184,7 +184,7 @@ def extract_phone(text):
 
 def extract_education(text):
     degrees = ["B.Tech", "M.Tech", "B.E", "M.E", "B.Sc", "M.Sc", "Diploma", "Bachelor", "Master"]
-    found = [deg for deg in degrees if re.search(deg, text, re.IGNORECASE)]
+    found = [kw for kw in keywords if re.search(rf"\b{re.escape(kw)}\b", text, re.IGNORECASE)]
     return ", ".join(found) if found else "Not Mentioned"
 
 def extract_skills(text):
