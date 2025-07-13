@@ -189,7 +189,7 @@ def extract_education(text):
 
 def extract_skills(text):
     keywords = ["Python", "Java", "C++", "Django", "Flask", "Pandas", "NumPy", "SQL", "HTML", "CSS", "JavaScript", "Git"]
-    found = [kw for kw in keywords if re.search(rf"\b{kw}\b", text, re.IGNORECASE)]
+    found = [kw for kw in keywords if re.search(rf"\b{re.escape(kw)}\b", text, re.IGNORECASE)]
     return ", ".join(found) if found else "Not Mentioned"
 
 def extract_experience(text):
@@ -200,11 +200,11 @@ def classify_experience(exp):
     if exp is None:
         return "Unspecified"
     elif exp <= 1:
-        return "0-1 year"
+        return "0–1 year"
     elif exp <= 3:
-        return "1-3 years"
+        return "1–3 years"
     elif exp <= 5:
-        return "3-5 years"
+        return "3–5 years"
     else:
         return "5+ years"
 
@@ -221,16 +221,16 @@ def extract_location(text):
     return "Not Mentioned"
 
 def extract_salary(text):
-    match = re.search(r"\₹?\s?\d{2,3}[,\d]*(\.\d+)?\s*(LPA|CTC|per annum|lakhs)?", text, re.IGNORECASE)
+    match = re.search(r"₹?\s?\d{2,3}[,\d]*(\.\d+)?\s*(LPA|CTC|per annum|lakhs)?", text, re.IGNORECASE)
     return match.group(0).strip() if match else "Not Mentioned"
 
 def extract_role(text):
     roles = ["Data Scientist", "Backend Developer", "Frontend Developer", "ML Engineer", "Software Engineer"]
-    found = [role for role in roles if re.search(role, text, re.IGNORECASE)]
+    found = [role for role in roles if re.search(re.escape(role), text, re.IGNORECASE)]
     return found[0] if found else "Unspecified"
 
 def interview_score(skills, exp):
-    base = len(skills.split(", ")) * 5
+    base = len(skills.split(", ")) * 5 if skills != "Not Mentioned" else 0
     exp_score = exp * 2 if exp else 0
     return base + exp_score
 
@@ -267,27 +267,23 @@ def process_resumes(uploaded_files):
         })
 
         rows.append({
-            "Resume Name": file.name,
             "Name": name,
             "Email": email,
             "Phone": phone,
             "Education": edu,
             "Graduation Year": grad,
             "Skills": skills,
-            "Experience (yrs)": exp,
-            "Exp Level": exp_lvl,
+            "Experience": f"{exp} years" if exp else "Unspecified",
+            "Experience Level": exp_lvl,
             "Expected Salary": salary,
-            "Location": location,
             "Job Role": role,
+            "Location": location,
             "Interview Score": score,
             "Rating": get_rating(score),
-            "Summary": summary,
-            "Date Uploaded": datetime.now().strftime("%Y-%m-%d"),
-            "Full Text": text,
-            "Resume File": file.read()
+            "Summary": summary
         })
 
-    return pd.DataFrame(rows)  # ✅ Make sure this is inside the function!
+    return pd.DataFrame(rows)
 
 
 
