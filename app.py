@@ -309,7 +309,6 @@ else:
         edu_filter = st.multiselect("Education", sorted(set(df["Education"])))
         exp_filter = st.multiselect("Experience Level", sorted(df["Experience Level"].unique()))
 
-
     with col3:
         loc_filter = st.multiselect("Location", sorted(df["Location"].unique()))
         grad_filter = st.multiselect("Graduation Year", sorted(df["Graduation Year"].unique()))
@@ -323,7 +322,7 @@ else:
     if edu_filter:
         filtered = filtered[filtered["Education"].isin(edu_filter)]
     if exp_filter:
-    filtered = filtered[filtered["Experience Level"].isin(exp_filter)]
+        filtered = filtered[filtered["Experience Level"].isin(exp_filter)]
     if loc_filter:
         filtered = filtered[filtered["Location"].isin(loc_filter)]
     if grad_filter:
