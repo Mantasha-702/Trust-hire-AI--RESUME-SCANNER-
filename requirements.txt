@@ -10,3 +10,5 @@ Pillow
 streamlit-webrtc
 speechrecognition
 numpy
+yagmail
+
