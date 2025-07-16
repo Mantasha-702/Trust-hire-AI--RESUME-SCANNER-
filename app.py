@@ -867,7 +867,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
     name = top["Name"]
     skills = top["Skills"]
     edu = top["Education"]
-    exp = top["Exp Level"]
+    exp = top["Experience Level"]
     loc = top["Location"]
     salary = top["Expected Salary"]
     score = top["Interview Score"]
