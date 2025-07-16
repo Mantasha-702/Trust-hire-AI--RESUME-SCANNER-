@@ -332,7 +332,7 @@ else:
         filtered = filtered[filtered["Date Uploaded"].isin(date_filter)]
 
     # 👁️ Show filtered table
-   if "Full Text" in filtered.columns:
+if "Full Text" in filtered.columns:
     st.dataframe(filtered.drop(columns=["Full Text"]), use_container_width=True)
 else:
     st.dataframe(filtered, use_container_width=True)
