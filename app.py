@@ -332,13 +332,13 @@ else:
         filtered = filtered[filtered["Date Uploaded"].isin(date_filter)]
 
     # 👁️ Show filtered table
-if "Full Text" in filtered.columns:
-    st.dataframe(filtered.drop(columns=["Full Text"]), use_container_width=True)
-else:
-    st.dataframe(filtered, use_container_width=True)
+    if "Full Text" in filtered.columns:
+        st.dataframe(filtered.drop(columns=["Full Text"]), use_container_width=True)
+    else:
+        st.dataframe(filtered, use_container_width=True)
 
     # 📥 CSV Download
-    csv = filtered.drop(columns=["Full Text"]).to_csv(index=False).encode("utf-8")
+    csv = filtered.drop(columns=["Full Text"], errors="ignore").to_csv(index=False).encode("utf-8")
     st.download_button(
         "📥 Download Filtered Data (CSV)",
         data=csv,
@@ -348,7 +348,7 @@ else:
     )
 
     # 📥 JSON Download
-    json_data = filtered.drop(columns=["Full Text"]).to_json(orient="records", indent=2)
+    json_data = filtered.drop(columns=["Full Text"], errors="ignore").to_json(orient="records", indent=2)
     st.download_button(
         label="🧾 Download Filtered Data (JSON)",
         data=json_data,
@@ -356,6 +356,7 @@ else:
         mime="application/json",
         key="filtered_json_download"
     )
+
 
     # -------------------- Email Section --------------------
     EMAIL_SENDER = "your_email@gmail.com"
