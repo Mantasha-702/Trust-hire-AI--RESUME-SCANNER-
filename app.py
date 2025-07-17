@@ -71,7 +71,25 @@ st.markdown(f"""
         background-repeat: no-repeat;
         font-family: 'Segoe UI', sans-serif;
         color: white;
+        position: relative;
     }}
+
+    .stApp::before {{
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: inherit;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        opacity: 0.15; /* Lower brightness */
+        filter: blur(2px); /* Slight blur */
+        z-index: -1;
+    }}
+
     .login-container {{
         width: 100%;
         max-width: 400px;
@@ -80,21 +98,25 @@ st.markdown(f"""
         background-color: rgba(0, 0, 0, 0.0);  /* Transparent */
         text-align: center;
     }}
+
     .login-title {{
         font-size: 36px;
         font-weight: bold;
         margin-bottom: 10px;
         color: white;
     }}
+
     .login-tagline {{
         font-size: 16px;
         color: #ccc;
         margin-bottom: 30px;
     }}
+
     .stTextInput input {{
         background-color: #222;
         color: white;
     }}
+
     .stButton>button {{
         width: 100%;
         padding: 10px;
@@ -105,9 +127,11 @@ st.markdown(f"""
         font-weight: bold;
         margin-top: 20px;
     }}
+
     .stCheckbox>label {{
         color: #ccc;
     }}
+
     .forgot a {{
         color: #9ecbff;
         font-size: 0.85rem;
