@@ -61,6 +61,7 @@ if 'voice_text' not in st.session_state:
     st.session_state.voice_text = ""
 
 
+# 💠 Custom CSS
 st.markdown(f"""
     <style>
     .stApp {{
@@ -73,27 +74,25 @@ st.markdown(f"""
     }}
     .login-container {{
         width: 100%;
-        max-width: 420px;
+        max-width: 400px;
         margin: 10vh auto;
         padding: 40px;
-        background-color: rgba(0, 0, 0, 0.6);  /* Semi-transparent dark box */
-        border-radius: 15px;
+        background-color: rgba(0, 0, 0, 0.0);  /* Transparent */
         text-align: center;
-        box-shadow: 0 0 15px rgba(0,0,0,0.4);
     }}
     .login-title {{
         font-size: 36px;
         font-weight: bold;
         margin-bottom: 10px;
-        color: #ffffff;
+        color: white;
     }}
     .login-tagline {{
         font-size: 16px;
-        color: #cccccc;
+        color: #ccc;
         margin-bottom: 30px;
     }}
     .stTextInput input {{
-        background-color: #333;
+        background-color: #222;
         color: white;
     }}
     .stButton>button {{
@@ -117,6 +116,7 @@ st.markdown(f"""
     }}
     </style>
 """, unsafe_allow_html=True)
+
 
 
 # 👤 Login UI
