@@ -11,4 +11,4 @@ streamlit-webrtc
 speechrecognition
 numpy
 yagmail
-
+gTTS
