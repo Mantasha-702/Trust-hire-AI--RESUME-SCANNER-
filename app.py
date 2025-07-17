@@ -281,6 +281,7 @@ def process_resumes(uploaded_files):
             "Interview Score": score,
             "Rating": get_rating(score),
             "Summary": summary,
+            "Full Text": text,
             "Date Uploaded": datetime.now().strftime("%Y-%m-%d")
         })
 
