@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import pytesseract
-import pyttsx3
+from gtts import gTTS
+from io import BytesIO
 import re
 import fitz  # PyMuPDF
 from pdf2image import convert_from_bytes
@@ -836,7 +837,6 @@ if st.button("🗑️ Clear Chat History", key="clear_chat"):
 
 # 🔈 Final Voice Summary Section (Modern Layout with Language Toggle)
 if "df" in st.session_state and not st.session_state.df.empty:
-
     df = st.session_state.df
 
     st.markdown("""<style>
@@ -868,7 +868,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
     name = top["Name"]
     skills = top["Skills"]
     edu = top["Education"]
-    exp = top["Experience Level"]
+    exp = top.get("Experience Level", "Unspecified")
     loc = top["Location"]
     salary = top["Expected Salary"]
     score = top["Interview Score"]
@@ -879,7 +879,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
         f"Their interview score is {score}."
     )
 
-    # 🔄 Language toggle
+    # 🌐 Language toggle
     lang = st.radio("🌐 Select language for voice output:", ["English", "Hindi"], horizontal=True)
 
     try:
@@ -897,20 +897,24 @@ if "df" in st.session_state and not st.session_state.df.empty:
     st.text_area("Summary", value=final_summary, height=180, label_visibility="collapsed")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # 🎧 Voice button
-    if st.button("🔊 Read Resume Summary"):
-        try:
-            import pyttsx3
-            engine = pyttsx3.init()
-            engine.setProperty('rate', 150)
-            engine.say(final_summary)
-            engine.runAndWait()
-            st.success("✅ Voice summary played successfully!")
-        except Exception as e:
-            st.error("⚠️ Voice playback failed. This works best when run locally.")
-            st.exception(e)
+    # 🎧 In-browser Voice Playback
+    def speak_text(text, lang_code):
+        tts = gTTS(text, lang=lang_code)
+        mp3_fp = BytesIO()
+        tts.write_to_fp(mp3_fp)
+        mp3_fp.seek(0)
+        b64_audio = base64.b64encode(mp3_fp.read()).decode()
+        st.markdown(f"""
+        <audio controls autoplay>
+            <source src="data:audio/mp3;base64,{b64_audio}" type="audio/mp3">
+        </audio>
+        """, unsafe_allow_html=True)
 
-    # 💾 Download button
+    if st.button("🔊 Read Resume Summary"):
+        lang_code = "hi" if lang == "Hindi" else "en"
+        speak_text(final_summary, lang_code)
+
+    # 💾 Download summary
     st.download_button(
         "🗅️ Download Summary",
         data=final_summary.encode("utf-8"),
