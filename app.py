@@ -61,7 +61,6 @@ if 'voice_text' not in st.session_state:
     st.session_state.voice_text = ""
 
 
-# 💠 Custom CSS
 st.markdown(f"""
     <style>
     .stApp {{
@@ -71,52 +70,32 @@ st.markdown(f"""
         background-repeat: no-repeat;
         font-family: 'Segoe UI', sans-serif;
         color: white;
-        position: relative;
     }}
-
-    .stApp::before {{
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image: inherit;
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        opacity: 0.15; /* Lower brightness */
-        filter: blur(2px); /* Slight blur */
-        z-index: -1;
-    }}
-
     .login-container {{
         width: 100%;
-        max-width: 400px;
+        max-width: 420px;
         margin: 10vh auto;
         padding: 40px;
-        background-color: rgba(0, 0, 0, 0.0);  /* Transparent */
+        background-color: rgba(0, 0, 0, 0.6);  /* Semi-transparent dark box */
+        border-radius: 15px;
         text-align: center;
+        box-shadow: 0 0 15px rgba(0,0,0,0.4);
     }}
-
     .login-title {{
         font-size: 36px;
         font-weight: bold;
         margin-bottom: 10px;
-        color: white;
+        color: #ffffff;
     }}
-
     .login-tagline {{
         font-size: 16px;
-        color: #ccc;
+        color: #cccccc;
         margin-bottom: 30px;
     }}
-
     .stTextInput input {{
-        background-color: #222;
+        background-color: #333;
         color: white;
     }}
-
     .stButton>button {{
         width: 100%;
         padding: 10px;
@@ -127,11 +106,9 @@ st.markdown(f"""
         font-weight: bold;
         margin-top: 20px;
     }}
-
     .stCheckbox>label {{
         color: #ccc;
     }}
-
     .forgot a {{
         color: #9ecbff;
         font-size: 0.85rem;
@@ -140,6 +117,7 @@ st.markdown(f"""
     }}
     </style>
 """, unsafe_allow_html=True)
+
 
 # 👤 Login UI
 if not st.session_state.authenticated:
