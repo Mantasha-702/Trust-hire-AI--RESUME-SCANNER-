@@ -317,8 +317,12 @@ view_mode = st.radio("Select View Mode:", ["Simple", "Advanced"], horizontal=Tru
 
 if view_mode == "Simple":
     # Quick Fix: Just a text suggestion
-    predicted_text = future_skills_predictor(row["Skills"], row["Role"])
+   if "df" in st.session_state and not st.session_state.df.empty:
+    selected_name = st.selectbox("Select Candidate for Prediction", st.session_state.df["Name"])
+    selected_row = st.session_state.df[st.session_state.df["Name"] == selected_name].iloc[0]
+    predicted_text = future_skills_predictor(selected_row["Skills"], selected_row["Job Role"])
     st.markdown(predicted_text)
+
 
 else:
     # Advanced: Show score, badges, and suggestions
