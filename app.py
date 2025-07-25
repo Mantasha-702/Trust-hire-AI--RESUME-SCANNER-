@@ -234,10 +234,6 @@ def extract_salary(text):
     match = re.search(r"₹?\s?\d{2,3}[,\d]*(\.\d+)?\s*(LPA|CTC|per annum|lakhs)?", text, re.IGNORECASE)
     return match.group(0).strip() if match else "Not Mentioned"
 
-
-# --- Smart Role Extractor ---
-role, _ = extract_role(text)  # unpack role and ignore score
-
 def extract_role(text):
     roles = [
         "Data Scientist", "Backend Developer", "Frontend Developer",
@@ -311,17 +307,11 @@ def suggest_future_skills(current_skills, role):
     current = [s.strip().lower() for s in current_skills.split(",")]
     return {skill: demand for skill, demand in skills_data.items() if skill.lower() not in current}
 
-    if missing_skills:
-        return f"📈 **Future Skills Predictor**\nYou should consider upskilling in: **{', '.join(missing_skills)}**"
-    else:
-        return "📈 **Future Skills Predictor**\n🎉 Your skills are already aligned with the latest job market trends!"
-
-
-# --- Advanced Version (With Score + Badges) ---
 def advanced_future_skills(current_skills, role):
     future_trends = fetch_trending_skills_from_api(role) or local_trending_skills.get(role, {})
-    matched = [skill for skill in future_trends if skill in current_skills.split(", ")]
-    missing = {skill: demand for skill, demand in future_trends.items() if skill not in current_skills.split(", ")}
+    current = [s.strip().lower() for s in current_skills.split(",")]
+    matched = [skill for skill in future_trends if skill.lower() in current]
+    missing = {skill: demand for skill, demand in future_trends.items() if skill.lower() not in current}
     score = int((len(matched) / len(future_trends)) * 100) if future_trends else 0
     return matched, missing, score
 
