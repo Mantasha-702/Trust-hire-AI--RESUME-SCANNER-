@@ -234,10 +234,18 @@ def extract_salary(text):
     match = re.search(r"₹?\s?\d{2,3}[,\d]*(\.\d+)?\s*(LPA|CTC|per annum|lakhs)?", text, re.IGNORECASE)
     return match.group(0).strip() if match else "Not Mentioned"
 
+
+# --- Smart Role Extractor ---
 def extract_role(text):
-    roles = ["Data Scientist", "Backend Developer", "Frontend Developer", "ML Engineer", "Software Engineer"]
-    found = [role for role in roles if re.search(re.escape(role), text, re.IGNORECASE)]
-    return found[0] if found else "Unspecified"
+    # Expanded role list for better matching
+    roles = [
+        "Data Scientist", "Backend Developer", "Frontend Developer",
+        "ML Engineer", "Software Engineer", "AI/ML Engineer",
+        "Web Developer", "Cybersecurity Engineer", "Django Developer",
+        "Full Stack Developer", "DevOps Engineer"
+    ]
+    best_match, score = process.extractOne(text, roles)
+    return (best_match, score) if score >= 50 else ("Software Engineer", 0)  # fallback to Software Engineer
 
 def interview_score(skills, exp):
     base = len(skills.split(", ")) * 5 if skills != "Not Mentioned" else 0
@@ -256,16 +264,17 @@ local_trending_skills = {
     "Cybersecurity": {"Zero Trust Security": 88, "Cloud Security": 90, "AI Threat Detection": 85}
 }
 
+# --- Smart Trending Skills Fetcher ---
 def fetch_trending_skills_from_api(role):
     try:
-        # Fuzzy match role with local_trending_skills keys
+        # Fuzzy match role to trending skill keys
         choices = list(local_trending_skills.keys())
         match, score = process.extractOne(role, choices)
-        if score >= 50:  # Only accept if it's at least a 50% match
-            return {skill: min(100, demand + 5) for skill, demand in local_trending_skills[match].items()}
-        return None
+        if score >= 50:  # Only use if it's a decent match
+            return local_trending_skills[match], match, score
+        return {}, None, 0
     except:
-        return None
+        return {}, None, 0
 
 def suggest_future_skills(current_skills, role):
     skills_data = fetch_trending_skills_from_api(role) or local_trending_skills.get(role, {})
@@ -434,7 +443,7 @@ else:
         mime="application/json",
         key="filtered_json_download"
     )
-# -------------------- Future Skills Predictor (Fixed + Smart Matching) --------------------
+# -------------------- Future Skills Predictor (Smart + Debug Info) --------------------
 st.markdown("## 📈 Future Skills Predictor")
 
 if "df" in st.session_state and not st.session_state.df.empty:
@@ -442,17 +451,24 @@ if "df" in st.session_state and not st.session_state.df.empty:
     selected_name = st.selectbox("🔍 Select Candidate for Future Skills Prediction", st.session_state.df["Name"])
     selected_row = st.session_state.df[st.session_state.df["Name"] == selected_name].iloc[0]
     candidate_name = selected_row["Name"]
-    candidate_role = selected_row["Job Role"]
-    candidate_skills = selected_row["Skills"]
+    candidate_role_text = selected_row["Job Role"]
 
-    # Get suggestions
-    future_suggestions = suggest_future_skills(candidate_skills, candidate_role)
+    # Extract role with confidence
+    extracted_role, role_confidence = extract_role(candidate_role_text)
 
-    # Debug toggle
+    # Get trending skills with matched role
+    trending_skills, matched_role, match_confidence = fetch_trending_skills_from_api(extracted_role)
+
+    # Normalize skills for comparison
+    current_skills = [s.strip().lower() for s in selected_row["Skills"].split(",")]
+    future_suggestions = {skill: demand for skill, demand in trending_skills.items() if skill.lower() not in current_skills}
+
+    # Debug mode toggle
     if st.checkbox("Show Debug Info"):
-        st.write("Detected Role:", candidate_role)
-        st.write("Trending Skills for this Role:", fetch_trending_skills_from_api(candidate_role))
-        st.write("Current Skills:", candidate_skills)
+        st.write("Detected Role from Resume:", extracted_role, f"(Confidence: {role_confidence}%)")
+        st.write("Matched Role for Trending Skills:", matched_role, f"(Confidence: {match_confidence}%)")
+        st.write("Trending Skills for this Role:", trending_skills)
+        st.write("Current Skills:", current_skills)
         st.write("Suggested Skills:", future_suggestions)
 
     if future_suggestions:
@@ -468,7 +484,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
                         <div style='background:#dee2e6; border-radius:10px; height:20px;'>
                             <div style='width:{demand}%; background:#4B8BBE; height:20px; border-radius:10px;'></div>
                         </div>
-                        <p style='color:#ccc; font-size:12px; margin-top:4px;'>{demand}% Demand in {candidate_role}</p>
+                        <p style='color:#ccc; font-size:12px; margin-top:4px;'>{demand}% Demand in {matched_role or extracted_role}</p>
                     </div>
                     <a href='https://www.coursera.org/search?query={skill}' target='_blank'>
                         <button style='background:#4B8BBE;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;'>
@@ -479,12 +495,12 @@ if "df" in st.session_state and not st.session_state.df.empty:
                 """, unsafe_allow_html=True)
 
         # 📥 Download Roadmap PDF
-        pdf_path = generate_pdf(candidate_name, candidate_role, future_suggestions)
+        pdf_path = generate_pdf(candidate_name, matched_role or extracted_role, future_suggestions)
         with open(pdf_path, "rb") as f:
             st.download_button("📥 Download Personalized Roadmap PDF", f, file_name="Future_Skills_Roadmap.pdf")
 
     else:
-        st.success("🎉 Your skills are already aligned with the latest job market trends!")
+        st.warning("⚠️ No matching future skills found. Try updating role extraction or adding more skills to resume.")
     # -------------------- Email Section --------------------
     EMAIL_SENDER = "your_email@gmail.com"
     EMAIL_PASSWORD = "your_app_password"  # use your Gmail App Password
