@@ -236,7 +236,8 @@ def extract_salary(text):
 
 
 # --- Smart Role Extractor ---
-def extract_role(text):
+role, _ = extract_role(text)  # unpack role and ignore score
+
     # Expanded role list for better matching
     roles = [
         "Data Scientist", "Backend Developer", "Frontend Developer",
@@ -342,7 +343,7 @@ def process_resumes(uploaded_files):
         exp_lvl = classify_experience(exp)
         location = extract_location(text)
         salary = extract_salary(text)
-        role = extract_role(text)
+        role, _ = extract_role(text)  # only store role text
         score = interview_score(skills, exp)
         summary = generate_summary({
             "Name": name,
