@@ -285,6 +285,66 @@ def generate_pdf(candidate_name, role, suggestions):
 def generate_summary(row):
     return f"{row['Name']} has {row['Experience']} of experience in {row['Skills']}. They graduated in {row['Graduation Year']} and expect {row['Expected Salary']} salary."
 
+# =================== FUTURE SKILLS PREDICTOR BLOCK ===================
+
+# --- Quick Fix Version (Simple) ---
+def future_skills_predictor(current_skills, role):
+    # Use trending skills based on role (fallback to defaults)
+    future_trends = fetch_trending_skills_from_api(role) or local_trending_skills.get(role, {})
+    missing_skills = [skill for skill in future_trends if skill not in current_skills.split(", ")]
+
+    if missing_skills:
+        return f"📈 **Future Skills Predictor**\nYou should consider upskilling in: **{', '.join(missing_skills)}**"
+    else:
+        return "📈 **Future Skills Predictor**\n🎉 Your skills are already aligned with the latest job market trends!"
+
+
+# --- Advanced Version (With Score + Badges) ---
+def advanced_future_skills(current_skills, role):
+    future_trends = fetch_trending_skills_from_api(role) or local_trending_skills.get(role, {})
+    matched = [skill for skill in future_trends if skill in current_skills.split(", ")]
+    missing = {skill: demand for skill, demand in future_trends.items() if skill not in current_skills.split(", ")}
+    score = int((len(matched) / len(future_trends)) * 100) if future_trends else 0
+    return matched, missing, score
+
+
+# =================== STREAMLIT DISPLAY ===================
+
+st.subheader("📈 Future Skills Predictor")
+
+# --- Toggle between Simple & Advanced view ---
+view_mode = st.radio("Select View Mode:", ["Simple", "Advanced"], horizontal=True)
+
+if view_mode == "Simple":
+    # Quick Fix: Just a text suggestion
+    predicted_text = future_skills_predictor(row["Skills"], row["Role"])
+    st.markdown(predicted_text)
+
+else:
+    # Advanced: Show score, badges, and suggestions
+    matched, missing, score = advanced_future_skills(row["Skills"], row["Role"])
+    st.write(f"**Future Skills Alignment Score:** {score}%")
+    st.progress(score)
+
+    st.markdown("**Current Future-Ready Skills:**")
+    if matched:
+        st.markdown(
+            " ".join([
+                f"<span style='background-color:#4CAF50;color:white;padding:4px 8px;border-radius:10px;margin:2px;'>{skill}</span>"
+                for skill in matched
+            ]), unsafe_allow_html=True
+        )
+    else:
+        st.write("No trending skills found in your resume.")
+
+    st.markdown("**Suggested Skills to Learn:**")
+    if missing:
+        for skill, demand in missing.items():
+            st.markdown(f"- **{skill}** (Market Demand: {demand}%)")
+    else:
+        st.write("🎉 You’re fully aligned with the latest job market trends!")
+
+
 def process_resumes(uploaded_files):
     rows = []
 
