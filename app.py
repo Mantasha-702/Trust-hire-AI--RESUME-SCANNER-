@@ -257,10 +257,13 @@ local_trending_skills = {
 }
 
 def fetch_trending_skills_from_api(role):
-    # Placeholder for live API (LinkedIn/Indeed) - can extend later
     try:
-        api_data = {skill: min(100, demand + 5) for skill, demand in local_trending_skills.get(role, {}).items()}
-        return api_data if api_data else None
+        # Fuzzy match role with local_trending_skills keys
+        choices = list(local_trending_skills.keys())
+        match, score = process.extractOne(role, choices)
+        if score >= 50:  # Only accept if it's at least a 50% match
+            return {skill: min(100, demand + 5) for skill, demand in local_trending_skills[match].items()}
+        return None
     except:
         return None
 
@@ -292,10 +295,10 @@ def generate_summary(row):
 # =================== FUTURE SKILLS PREDICTOR BLOCK ===================
 
 # --- Quick Fix Version (Simple) ---
-def future_skills_predictor(current_skills, role):
-    # Use trending skills based on role (fallback to defaults)
-    future_trends = fetch_trending_skills_from_api(role) or local_trending_skills.get(role, {})
-    missing_skills = [skill for skill in future_trends if skill not in current_skills.split(", ")]
+def suggest_future_skills(current_skills, role):
+    skills_data = fetch_trending_skills_from_api(role) or {}
+    current = [s.strip().lower() for s in current_skills.split(",")]
+    return {skill: demand for skill, demand in skills_data.items() if skill.lower() not in current}
 
     if missing_skills:
         return f"📈 **Future Skills Predictor**\nYou should consider upskilling in: **{', '.join(missing_skills)}**"
@@ -431,7 +434,7 @@ else:
         mime="application/json",
         key="filtered_json_download"
     )
-# -------------------- Future Skills Predictor (Fixed + Dynamic) --------------------
+# -------------------- Future Skills Predictor (Fixed + Smart Matching) --------------------
 st.markdown("## 📈 Future Skills Predictor")
 
 if "df" in st.session_state and not st.session_state.df.empty:
@@ -442,17 +445,15 @@ if "df" in st.session_state and not st.session_state.df.empty:
     candidate_role = selected_row["Job Role"]
     candidate_skills = selected_row["Skills"]
 
-    # FIXED: Normalize skills (case insensitive)
-    def suggest_future_skills(current_skills, role):
-        skills_data = fetch_trending_skills_from_api(role) or local_trending_skills.get(role, {})
-        current = [s.strip().lower() for s in current_skills.split(",")]
-        return {skill: demand for skill, demand in skills_data.items() if skill.lower() not in current}
-
+    # Get suggestions
     future_suggestions = suggest_future_skills(candidate_skills, candidate_role)
 
-    # DEBUG INFO (Optional - comment out later)
-    # st.write("🎯 Normalized Resume Skills:", current)
-    # st.write("📊 Trending Skills:", list(skills_data.keys()))
+    # Debug toggle
+    if st.checkbox("Show Debug Info"):
+        st.write("Detected Role:", candidate_role)
+        st.write("Trending Skills for this Role:", fetch_trending_skills_from_api(candidate_role))
+        st.write("Current Skills:", candidate_skills)
+        st.write("Suggested Skills:", future_suggestions)
 
     if future_suggestions:
         st.markdown("### 💡 Suggested Skills for the Future:")
@@ -484,8 +485,6 @@ if "df" in st.session_state and not st.session_state.df.empty:
 
     else:
         st.success("🎉 Your skills are already aligned with the latest job market trends!")
-
-
     # -------------------- Email Section --------------------
     EMAIL_SENDER = "your_email@gmail.com"
     EMAIL_PASSWORD = "your_app_password"  # use your Gmail App Password
