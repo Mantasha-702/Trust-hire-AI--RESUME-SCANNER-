@@ -238,7 +238,7 @@ def extract_salary(text):
 # --- Smart Role Extractor ---
 role, _ = extract_role(text)  # unpack role and ignore score
 
-    # Expanded role list for better matching
+def extract_role(text):
     roles = [
         "Data Scientist", "Backend Developer", "Frontend Developer",
         "ML Engineer", "Software Engineer", "AI/ML Engineer",
@@ -246,7 +246,8 @@ role, _ = extract_role(text)  # unpack role and ignore score
         "Full Stack Developer", "DevOps Engineer"
     ]
     best_match, score = process.extractOne(text, roles)
-    return (best_match, score) if score >= 50 else ("Software Engineer", 0)  # fallback to Software Engineer
+    return (best_match if score >= 50 else "Software Engineer", score if score >= 50 else 0)
+
 
 def interview_score(skills, exp):
     base = len(skills.split(", ")) * 5 if skills != "Not Mentioned" else 0
@@ -343,7 +344,7 @@ def process_resumes(uploaded_files):
         exp_lvl = classify_experience(exp)
         location = extract_location(text)
         salary = extract_salary(text)
-        role, _ = extract_role(text)  # only store role text
+       role, role_confidence = extract_role(text)  # unpack tuple
         score = interview_score(skills, exp)
         summary = generate_summary({
             "Name": name,
@@ -363,7 +364,7 @@ def process_resumes(uploaded_files):
             "Experience": f"{exp} years" if exp else "Unspecified",
             "Experience Level": exp_lvl,
             "Expected Salary": salary,
-            "Job Role": role,
+            "Job Role": role,  # store only the role text (string)
             "Location": location,
             "Interview Score": score,
             "Rating": get_rating(score),
