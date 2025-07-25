@@ -310,44 +310,48 @@ def advanced_future_skills(current_skills, role):
 
 # =================== STREAMLIT DISPLAY ===================
 
-st.subheader("📈 Future Skills Predictor")
+# -------------------- Future Skills Predictor --------------------
+st.markdown("## 📈 Future Skills Predictor")
 
-# --- Toggle between Simple & Advanced view ---
-view_mode = st.radio("Select View Mode:", ["Simple", "Advanced"], horizontal=True)
-
-if view_mode == "Simple":
-    # Quick Fix: Just a text suggestion
-   if "df" in st.session_state and not st.session_state.df.empty:
-    selected_name = st.selectbox("Select Candidate for Prediction", st.session_state.df["Name"])
+if "df" in st.session_state and not st.session_state.df.empty:
+    # Let user choose which candidate to analyze
+    selected_name = st.selectbox("Select Candidate for Future Skills Prediction", st.session_state.df["Name"])
     selected_row = st.session_state.df[st.session_state.df["Name"] == selected_name].iloc[0]
-    predicted_text = future_skills_predictor(selected_row["Skills"], selected_row["Job Role"])
-    st.markdown(predicted_text)
+    candidate_name = selected_row["Name"]
+    candidate_role = selected_row["Job Role"]
+    candidate_skills = selected_row["Skills"]
 
+    # Get suggestions
+    future_suggestions = suggest_future_skills(candidate_skills, candidate_role)
 
-else:
-    # Advanced: Show score, badges, and suggestions
-    matched, missing, score = advanced_future_skills(row["Skills"], row["Role"])
-    st.write(f"**Future Skills Alignment Score:** {score}%")
-    st.progress(score)
+    if future_suggestions:
+        cols = st.columns(2)
+        for i, (skill, demand) in enumerate(future_suggestions.items()):
+            with cols[i % 2]:
+                st.markdown(f"""
+                <div style='padding:15px; background:rgba(255,255,255,0.05); border-radius:15px; 
+                box-shadow:0 3px 8px rgba(0,0,0,0.2); margin-bottom:15px;'>
+                    <h4 style='color:#4B8BBE;'>{skill}</h4>
+                    <div style='margin:8px 0;'>
+                        <div style='background:#dee2e6; border-radius:10px; height:20px;'>
+                            <div style='width:{demand}%; background:#4B8BBE; height:20px; border-radius:10px;'></div>
+                        </div>
+                        <p style='color:#ccc; font-size:12px; margin-top:4px;'>{demand}% Demand in {candidate_role}</p>
+                    </div>
+                    <a href='https://www.coursera.org/search?query={skill}' target='_blank'>
+                        <button style='background:#4B8BBE;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;'>
+                            Learn More
+                        </button>
+                    </a>
+                </div>
+                """, unsafe_allow_html=True)
 
-    st.markdown("**Current Future-Ready Skills:**")
-    if matched:
-        st.markdown(
-            " ".join([
-                f"<span style='background-color:#4CAF50;color:white;padding:4px 8px;border-radius:10px;margin:2px;'>{skill}</span>"
-                for skill in matched
-            ]), unsafe_allow_html=True
-        )
+        # PDF Download
+        pdf_path = generate_pdf(candidate_name, candidate_role, future_suggestions)
+        with open(pdf_path, "rb") as f:
+            st.download_button("📥 Download Personalized Roadmap PDF", f, file_name="Future_Skills_Roadmap.pdf")
     else:
-        st.write("No trending skills found in your resume.")
-
-    st.markdown("**Suggested Skills to Learn:**")
-    if missing:
-        for skill, demand in missing.items():
-            st.markdown(f"- **{skill}** (Market Demand: {demand}%)")
-    else:
-        st.write("🎉 You’re fully aligned with the latest job market trends!")
-
+        st.success("🎉 Your skills are already aligned with the latest job market trends!")
 
 def process_resumes(uploaded_files):
     rows = []
