@@ -344,7 +344,7 @@ def process_resumes(uploaded_files):
         exp_lvl = classify_experience(exp)
         location = extract_location(text)
         salary = extract_salary(text)
-       role, role_confidence = extract_role(text)  # unpack tuple
+        role, role_confidence = extract_role(text)  # <-- Correct indentation
         score = interview_score(skills, exp)
         summary = generate_summary({
             "Name": name,
@@ -364,7 +364,7 @@ def process_resumes(uploaded_files):
             "Experience": f"{exp} years" if exp else "Unspecified",
             "Experience Level": exp_lvl,
             "Expected Salary": salary,
-            "Job Role": role,  # store only the role text (string)
+            "Job Role": role,  # <-- Only the role string
             "Location": location,
             "Interview Score": score,
             "Rating": get_rating(score),
