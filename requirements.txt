@@ -14,3 +14,4 @@ SpeechRecognition
 av
 numpy
 fpdf
+pyttsx3
