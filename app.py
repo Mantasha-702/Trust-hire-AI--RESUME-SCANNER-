@@ -266,7 +266,11 @@ def fetch_trending_skills_from_api(role):
 
 def suggest_future_skills(current_skills, role):
     skills_data = fetch_trending_skills_from_api(role) or local_trending_skills.get(role, {})
-    return {skill: demand for skill, demand in skills_data.items() if skill not in current_skills.split(", ")}
+    # Normalize resume skills
+    current = [s.strip().lower() for s in current_skills.split(",")]
+    # Only suggest those not already present
+    return {skill: demand for skill, demand in skills_data.items() if skill.lower() not in current}
+
 
 def generate_pdf(candidate_name, role, suggestions):
     pdf = FPDF()
@@ -310,48 +314,6 @@ def advanced_future_skills(current_skills, role):
 
 # =================== STREAMLIT DISPLAY ===================
 
-# -------------------- Future Skills Predictor --------------------
-st.markdown("## 📈 Future Skills Predictor")
-
-if "df" in st.session_state and not st.session_state.df.empty:
-    # Let user choose which candidate to analyze
-    selected_name = st.selectbox("Select Candidate for Future Skills Prediction", st.session_state.df["Name"])
-    selected_row = st.session_state.df[st.session_state.df["Name"] == selected_name].iloc[0]
-    candidate_name = selected_row["Name"]
-    candidate_role = selected_row["Job Role"]
-    candidate_skills = selected_row["Skills"]
-
-    # Get suggestions
-    future_suggestions = suggest_future_skills(candidate_skills, candidate_role)
-
-    if future_suggestions:
-        cols = st.columns(2)
-        for i, (skill, demand) in enumerate(future_suggestions.items()):
-            with cols[i % 2]:
-                st.markdown(f"""
-                <div style='padding:15px; background:rgba(255,255,255,0.05); border-radius:15px; 
-                box-shadow:0 3px 8px rgba(0,0,0,0.2); margin-bottom:15px;'>
-                    <h4 style='color:#4B8BBE;'>{skill}</h4>
-                    <div style='margin:8px 0;'>
-                        <div style='background:#dee2e6; border-radius:10px; height:20px;'>
-                            <div style='width:{demand}%; background:#4B8BBE; height:20px; border-radius:10px;'></div>
-                        </div>
-                        <p style='color:#ccc; font-size:12px; margin-top:4px;'>{demand}% Demand in {candidate_role}</p>
-                    </div>
-                    <a href='https://www.coursera.org/search?query={skill}' target='_blank'>
-                        <button style='background:#4B8BBE;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;'>
-                            Learn More
-                        </button>
-                    </a>
-                </div>
-                """, unsafe_allow_html=True)
-
-        # PDF Download
-        pdf_path = generate_pdf(candidate_name, candidate_role, future_suggestions)
-        with open(pdf_path, "rb") as f:
-            st.download_button("📥 Download Personalized Roadmap PDF", f, file_name="Future_Skills_Roadmap.pdf")
-    else:
-        st.success("🎉 Your skills are already aligned with the latest job market trends!")
 
 def process_resumes(uploaded_files):
     rows = []
@@ -469,17 +431,31 @@ else:
         mime="application/json",
         key="filtered_json_download"
     )
-# -------------------- Future Skills Predictor --------------------
+# -------------------- Future Skills Predictor (Fixed + Dynamic) --------------------
 st.markdown("## 📈 Future Skills Predictor")
+
 if "df" in st.session_state and not st.session_state.df.empty:
-    top_resume = st.session_state.df.iloc[0]  # Example: Take first candidate (or allow selection)
-    candidate_name = top_resume["Name"]
-    candidate_role = top_resume["Job Role"]
-    candidate_skills = top_resume["Skills"]
+    # Select candidate
+    selected_name = st.selectbox("🔍 Select Candidate for Future Skills Prediction", st.session_state.df["Name"])
+    selected_row = st.session_state.df[st.session_state.df["Name"] == selected_name].iloc[0]
+    candidate_name = selected_row["Name"]
+    candidate_role = selected_row["Job Role"]
+    candidate_skills = selected_row["Skills"]
+
+    # FIXED: Normalize skills (case insensitive)
+    def suggest_future_skills(current_skills, role):
+        skills_data = fetch_trending_skills_from_api(role) or local_trending_skills.get(role, {})
+        current = [s.strip().lower() for s in current_skills.split(",")]
+        return {skill: demand for skill, demand in skills_data.items() if skill.lower() not in current}
 
     future_suggestions = suggest_future_skills(candidate_skills, candidate_role)
 
+    # DEBUG INFO (Optional - comment out later)
+    # st.write("🎯 Normalized Resume Skills:", current)
+    # st.write("📊 Trending Skills:", list(skills_data.keys()))
+
     if future_suggestions:
+        st.markdown("### 💡 Suggested Skills for the Future:")
         cols = st.columns(2)
         for i, (skill, demand) in enumerate(future_suggestions.items()):
             with cols[i % 2]:
@@ -501,10 +477,11 @@ if "df" in st.session_state and not st.session_state.df.empty:
                 </div>
                 """, unsafe_allow_html=True)
 
-        if st.download_button("📥 Download Personalized Roadmap PDF"):
-            pdf_path = generate_pdf(candidate_name, candidate_role, future_suggestions)
-            with open(pdf_path, "rb") as f:
-                st.download_button("Download Roadmap", f, file_name="Future_Skills_Roadmap.pdf")
+        # 📥 Download Roadmap PDF
+        pdf_path = generate_pdf(candidate_name, candidate_role, future_suggestions)
+        with open(pdf_path, "rb") as f:
+            st.download_button("📥 Download Personalized Roadmap PDF", f, file_name="Future_Skills_Roadmap.pdf")
+
     else:
         st.success("🎉 Your skills are already aligned with the latest job market trends!")
 
