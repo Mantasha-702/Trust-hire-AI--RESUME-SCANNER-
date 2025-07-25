@@ -18,11 +18,17 @@ import av
 import numpy as np
 import threading
 from streamlit_webrtc import AudioProcessorBase
-
+import sqlite3
+import pyttsx3
+import random
+import webbrowser
+import tempfile
+from fpdf import FPDF
 
 
 # 🌈 Page Setup (MUST be first Streamlit command)
 st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
+theme = st.radio("Choose Theme:", ["Light", "Dark"], horizontal=True)
 
 
 # 📍 Path Configuration
@@ -240,6 +246,40 @@ def interview_score(skills, exp):
 def get_rating(score):
     stars = min(5, score // 10)
     return "⭐" * stars
+# --- Trending Skills (Fallback if API fails) ---
+local_trending_skills = {
+    "Data Scientist": {"Generative AI": 90, "MLOps": 85, "Big Data Analytics": 80, "LLMs": 88},
+    "Software Engineer": {"Cloud Native Development": 87, "DevOps": 82, "GraphQL": 75, "AI Automation": 89},
+    "Web Developer": {"WebAssembly": 77, "PWAs": 80, "AI-driven UX": 85, "Edge Computing": 79},
+    "AI/ML Engineer": {"Reinforcement Learning": 88, "AutoML": 84, "Generative AI": 91, "AI Ethics": 83},
+    "Cybersecurity": {"Zero Trust Security": 88, "Cloud Security": 90, "AI Threat Detection": 85}
+}
+
+def fetch_trending_skills_from_api(role):
+    # Placeholder for live API (LinkedIn/Indeed) - can extend later
+    try:
+        api_data = {skill: min(100, demand + 5) for skill, demand in local_trending_skills.get(role, {}).items()}
+        return api_data if api_data else None
+    except:
+        return None
+
+def suggest_future_skills(current_skills, role):
+    skills_data = fetch_trending_skills_from_api(role) or local_trending_skills.get(role, {})
+    return {skill: demand for skill, demand in skills_data.items() if skill not in current_skills.split(", ")}
+
+def generate_pdf(candidate_name, role, suggestions):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(200, 10, f"Future Skills Roadmap for {candidate_name}", ln=True, align="C")
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, f"Target Role: {role}", ln=True)
+    pdf.ln(10)
+    for skill, demand in suggestions.items():
+        pdf.multi_cell(0, 10, f"- {skill} ({demand}% Demand) - Learn here: https://www.coursera.org/search?query={skill}")
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    pdf.output(temp_file.name)
+    return temp_file.name
 
 def generate_summary(row):
     return f"{row['Name']} has {row['Experience']} of experience in {row['Skills']}. They graduated in {row['Graduation Year']} and expect {row['Expected Salary']} salary."
@@ -360,6 +400,44 @@ else:
         mime="application/json",
         key="filtered_json_download"
     )
+# -------------------- Future Skills Predictor --------------------
+st.markdown("## 📈 Future Skills Predictor")
+if "df" in st.session_state and not st.session_state.df.empty:
+    top_resume = st.session_state.df.iloc[0]  # Example: Take first candidate (or allow selection)
+    candidate_name = top_resume["Name"]
+    candidate_role = top_resume["Job Role"]
+    candidate_skills = top_resume["Skills"]
+
+    future_suggestions = suggest_future_skills(candidate_skills, candidate_role)
+
+    if future_suggestions:
+        cols = st.columns(2)
+        for i, (skill, demand) in enumerate(future_suggestions.items()):
+            with cols[i % 2]:
+                st.markdown(f"""
+                <div style='padding:15px; background:rgba(255,255,255,0.05); border-radius:15px; 
+                box-shadow:0 3px 8px rgba(0,0,0,0.2); margin-bottom:15px;'>
+                    <h4 style='color:#4B8BBE;'>{skill}</h4>
+                    <div style='margin:8px 0;'>
+                        <div style='background:#dee2e6; border-radius:10px; height:20px;'>
+                            <div style='width:{demand}%; background:#4B8BBE; height:20px; border-radius:10px;'></div>
+                        </div>
+                        <p style='color:#ccc; font-size:12px; margin-top:4px;'>{demand}% Demand in {candidate_role}</p>
+                    </div>
+                    <a href='https://www.coursera.org/search?query={skill}' target='_blank'>
+                        <button style='background:#4B8BBE;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;'>
+                            Learn More
+                        </button>
+                    </a>
+                </div>
+                """, unsafe_allow_html=True)
+
+        if st.download_button("📥 Download Personalized Roadmap PDF"):
+            pdf_path = generate_pdf(candidate_name, candidate_role, future_suggestions)
+            with open(pdf_path, "rb") as f:
+                st.download_button("Download Roadmap", f, file_name="Future_Skills_Roadmap.pdf")
+    else:
+        st.success("🎉 Your skills are already aligned with the latest job market trends!")
 
 
     # -------------------- Email Section --------------------
