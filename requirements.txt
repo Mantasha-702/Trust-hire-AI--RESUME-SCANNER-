@@ -18,6 +18,6 @@ pyttsx3
 passlib
 requests
 plotly
-fpdf
+fpdf2
 
 
