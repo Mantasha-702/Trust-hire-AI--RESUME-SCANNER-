@@ -152,14 +152,17 @@ if not st.session_state.get("authenticated", False):
             else:
                 st.error("Invalid credentials.")
 
-    with auth_tabs[1]:  # Register
-        new_email = st.text_input("Email", key="reg_email")
-        new_password = st.text_input("Password", type="password", key="reg_pass")
-        if st.button("Register", key="reg_btn"):
-            if register_user(new_email, new_password):
-                st.success("Account created! You can now log in.")
-            else:
-                st.error("Email already registered.")
+   with auth_tabs[1]:  # Register
+    new_email = st.text_input("Email", key="reg_email")
+    new_password = st.text_input("Password", type="password", key="reg_pass")
+    if st.button("Register", key="reg_btn"):
+        if register_user(new_email, new_password):
+            st.session_state.authenticated = True
+            st.session_state.email = new_email
+            st.success("Account created! Redirecting...")
+            st.rerun()
+        else:
+            st.error("Email already registered.")
 
     with auth_tabs[2]:  # Forgot Password
         reset_email = st.text_input("Email", key="reset_email")
