@@ -24,13 +24,10 @@ import random
 import webbrowser
 import tempfile
 from fpdf import FPDF
-import bcrypt      
+from passlib.hash import bcrypt   
 import random, string  
 
-
-
 # --- USER AUTHENTICATION DATABASE ---
-import bcrypt, string
 conn = sqlite3.connect("users.db")
 c = conn.cursor()
 c.execute("""
@@ -43,9 +40,9 @@ c.execute("""
 """)
 conn.commit()
 
-# --- USER AUTHENTICATION FUNCTIONS ---
-import bcrypt, random, string, yagmail
 
+
+# --- USER AUTHENTICATION FUNCTIONS ---
 EMAIL_SENDER = "your_email@gmail.com"      # <-- Replace with your email
 EMAIL_PASSWORD = "your_app_password"       # <-- Replace with your app password
 yag = yagmail.SMTP(EMAIL_SENDER, EMAIL_PASSWORD)
@@ -54,7 +51,7 @@ def generate_code(length=6):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
 def register_user(email, password):
-    hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+    hashed_pw = bcrypt.hash(password)  # Passlib bcrypt
     code = generate_code()
     try:
         c.execute("INSERT INTO users (email, password, verification_code) VALUES (?, ?, ?)", (email, hashed_pw, code))
@@ -75,12 +72,12 @@ def verify_user(email, code):
 def login_user(email, password):
     c.execute("SELECT password, verified FROM users WHERE email=?", (email,))
     row = c.fetchone()
-    if row and bcrypt.checkpw(password.encode(), row[0]):
-        return row[1] == 1  # Only allow if verified
+    if row and bcrypt.verify(password, row[0]):  # Passlib bcrypt verify
+        return row[1] == 1
     return False
 
 def reset_password(email, new_password):
-    hashed_pw = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt())
+    hashed_pw = bcrypt.hash(new_password)  # Passlib bcrypt
     c.execute("UPDATE users SET password=? WHERE email=?", (hashed_pw, email))
     conn.commit()
 
@@ -111,6 +108,55 @@ bg_base64 = get_base64_image("background_image.jpg")  # Make sure the file exist
 
 # 🌐 Translator
 translator = Translator()
+
+# 💠 Custom CSS
+st.markdown(f"""
+    <style>
+    .stApp {{
+        background-image: url("data:image/png;base64,{bg_base64}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        font-family: 'Segoe UI', sans-serif;
+        color: white;
+    }}
+    .login-container {{
+        width: 100%;
+        max-width: 400px;
+        margin: 10vh auto;
+        padding: 40px;
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 12px;
+        text-align: center;
+    }}
+    .login-title {{
+        font-size: 36px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: white;
+    }}
+    .login-tagline {{
+        font-size: 16px;
+        color: #ccc;
+        margin-bottom: 30px;
+    }}
+    .stTextInput input {{
+        background-color: #222;
+        color: white;
+    }}
+    .stButton>button {{
+        width: 100%;
+        padding: 10px;
+        border-radius: 10px;
+        background-color: #4B8BBE;
+        color: white;
+        border: none;
+        font-weight: bold;
+        margin-top: 20px;
+    }}
+    </style>
+""", unsafe_allow_html=True)
+
 
 # 👤 Modern Auth UI
 if not st.session_state.get("authenticated", False):
