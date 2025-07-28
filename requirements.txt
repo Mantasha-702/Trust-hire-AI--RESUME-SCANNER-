@@ -15,3 +15,5 @@ av
 numpy
 fpdf
 pyttsx3
+bcrypt
+
