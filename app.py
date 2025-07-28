@@ -26,6 +26,8 @@ import tempfile
 from fpdf import FPDF
 from passlib.hash import bcrypt   
 import random, string  
+import requests
+import plotly.graph_objects as go
 
 # --- USER AUTHENTICATION DATABASE ---
 conn = sqlite3.connect("users.db")
@@ -343,20 +345,155 @@ def generate_summary(row):
     return f"{row['Name']} has {row['Experience']} of experience in {row['Skills']}. They graduated in {row['Graduation Year']} and expect {row['Expected Salary']} salary."
 
 # =================== FUTURE SKILLS PREDICTOR BLOCK ===================
+# ===================== NEXT-LEVEL FUTURE SKILLS PREDICTOR =====================
 
-# --- Quick Fix Version (Simple) ---
-def suggest_future_skills(current_skills, role):
-    skills_data = fetch_trending_skills_from_api(role) or {}
-    current = [s.strip().lower() for s in current_skills.split(",")]
-    return {skill: demand for skill, demand in skills_data.items() if skill.lower() not in current}
 
-def advanced_future_skills(current_skills, role):
-    future_trends = fetch_trending_skills_from_api(role) or local_trending_skills.get(role, {})
-    current = [s.strip().lower() for s in current_skills.split(",")]
-    matched = [skill for skill in future_trends if skill.lower() in current]
-    missing = {skill: demand for skill, demand in future_trends.items() if skill.lower() not in current}
-    score = int((len(matched) / len(future_trends)) * 100) if future_trends else 0
-    return matched, missing, score
+st.markdown("## 📈 Future Skills & Career Roadmap (Next‑Gen)")
+
+if "df" in st.session_state and not st.session_state.df.empty:
+    # Select candidate
+    selected_name = st.selectbox("🔍 Select Candidate for Future Skills Prediction", st.session_state.df["Name"])
+    selected_row = st.session_state.df[st.session_state.df["Name"] == selected_name].iloc[0]
+    candidate_name = selected_row["Name"]
+    candidate_role_text = selected_row["Job Role"]
+
+    # --- Role detection
+    extracted_role, role_confidence = extract_role(candidate_role_text)
+
+    # --- LIVE + FALLBACK skill fetcher
+    def fetch_trending_skills(role):
+        try:
+            url = f"https://api.mockjobdata.com/trends?role={role}"
+            res = requests.get(url, timeout=5)
+            if res.status_code == 200:
+                return res.json()
+        except:
+            pass
+        # Fallback static
+        fallback = {
+            "Web Developer": {
+                "WebAssembly": 77,
+                "PWAs": 80,
+                "AI-driven UX": 85,
+                "Edge Computing": 79
+            },
+            "Data Scientist": {
+                "Generative AI": 90,
+                "MLOps": 85,
+                "Big Data Analytics": 80,
+                "LLMs": 88
+            },
+            "Software Engineer": {
+                "Cloud Native Development": 87,
+                "DevOps": 82,
+                "GraphQL": 75,
+                "AI Automation": 89
+            }
+        }
+        return fallback.get(role, {})
+    
+    trending_skills = fetch_trending_skills(extracted_role)
+
+    # --- Skill explanations
+    skill_info = {
+        "WebAssembly": "Boosts web app performance by running code at near-native speed.",
+        "PWAs": "Progressive Web Apps combine web and mobile experience for better UX.",
+        "AI-driven UX": "Improves design by integrating AI for personalization and efficiency.",
+        "Edge Computing": "Brings computation closer to users for low-latency apps.",
+        "Generative AI": "AI that creates text, images, or code to enhance productivity.",
+        "MLOps": "Streamlines ML model deployment & lifecycle management.",
+        "Big Data Analytics": "Extracts insights from massive datasets for smarter decisions.",
+        "LLMs": "Large Language Models enable advanced AI-powered applications."
+    }
+    def get_skill_explanation(skill):
+        return skill_info.get(skill, "Emerging skill for this role, highly in-demand.")
+
+    # --- Career path predictor
+    role_paths = {
+        "Web Developer": ["Frontend Lead", "Full Stack Architect", "Product Engineer"],
+        "Data Scientist": ["ML Engineer", "AI Researcher", "Chief Data Officer"],
+        "Software Engineer": ["Senior Developer", "Tech Lead", "Product Architect"]
+    }
+    career_path = role_paths.get(extracted_role, ["Specialist", "Team Lead", "Domain Expert"])
+
+    # --- Skill suggestions: exclude already present
+    current_skills = [s.strip().lower() for s in selected_row["Skills"].split(",")]
+    future_suggestions = {skill: demand for skill, demand in trending_skills.items() if skill.lower() not in current_skills}
+
+    # --- Debug mode
+    if st.checkbox("Show Debug Info"):
+        st.write("Detected Role:", extracted_role, f"(Confidence: {role_confidence}%)")
+        st.write("Trending Skills:", trending_skills)
+        st.write("Current Skills:", current_skills)
+        st.write("Suggested Skills:", future_suggestions)
+        st.write("Predicted Career Path:", career_path)
+
+    if future_suggestions:
+        st.markdown("### 💡 Suggested Skills for the Future:")
+        cols = st.columns(2)
+        for i, (skill, demand) in enumerate(future_suggestions.items()):
+            explanation = get_skill_explanation(skill)
+            with cols[i % 2]:
+                st.markdown(f"""
+                <div style='padding:15px; background:rgba(255,255,255,0.05); border-radius:15px; 
+                box-shadow:0 3px 8px rgba(0,0,0,0.2); margin-bottom:15px;'>
+                    <h4 style='color:#4B8BBE;'>{skill} - {demand}% Demand</h4>
+                    <p style='color:#ccc; font-size:13px;'>{explanation}</p>
+                    <a href='https://www.coursera.org/search?query={skill}' target='_blank'>
+                        <button style='background:#4B8BBE;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;'>
+                            Learn More
+                        </button>
+                    </a>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # --- Interactive Skill Graph
+        def generate_skill_tree(skills):
+            fig = go.Figure(go.Bar(
+                x=list(skills.values()),
+                y=list(skills.keys()),
+                orientation='h',
+                marker=dict(color='#4B8BBE')
+            ))
+            fig.update_layout(
+                title="Future Skills Demand",
+                xaxis_title="Market Demand (%)",
+                yaxis_title="Skills",
+                template="plotly_dark" if theme == "Dark" else "plotly_white"
+            )
+            return fig
+
+        st.markdown("### 📊 Interactive Skill Demand Chart:")
+        st.plotly_chart(generate_skill_tree(future_suggestions), use_container_width=True)
+
+        # --- PDF Roadmap
+        from fpdf import FPDF
+        import tempfile
+        def generate_pdf(candidate, role, skills, career_path):
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", "B", 16)
+            pdf.cell(200, 10, f"Future Skills Roadmap for {candidate}", ln=True, align="C")
+            pdf.set_font("Arial", size=12)
+            pdf.cell(200, 10, f"Target Role: {role}", ln=True)
+            pdf.ln(10)
+            for skill, demand in skills.items():
+                pdf.multi_cell(0, 10, f"- {skill}: {demand}% demand.")
+            pdf.ln(10)
+            pdf.cell(200, 10, "Predicted Career Path:", ln=True)
+            for step in career_path:
+                pdf.multi_cell(0, 10, f"→ {step}")
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+            pdf.output(temp_file.name)
+            return temp_file.name
+
+        pdf_path = generate_pdf(candidate_name, extracted_role, future_suggestions, career_path)
+        with open(pdf_path, "rb") as f:
+            st.download_button("📥 Download Personalized Roadmap PDF", f, file_name=f"{candidate_name}_roadmap.pdf")
+
+    else:
+        st.warning("⚠️ No matching future skills found for this role.")
+
 
 
 # =================== STREAMLIT DISPLAY ===================
