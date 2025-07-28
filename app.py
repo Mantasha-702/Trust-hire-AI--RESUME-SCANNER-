@@ -26,6 +26,69 @@ import tempfile
 from fpdf import FPDF
 
 
+# --- USER AUTHENTICATION DATABASE ---
+import bcrypt, string
+conn = sqlite3.connect("users.db")
+c = conn.cursor()
+c.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        email TEXT PRIMARY KEY,
+        password TEXT NOT NULL,
+        verified INTEGER DEFAULT 0,
+        verification_code TEXT
+    )
+""")
+conn.commit()
+
+# --- USER AUTHENTICATION FUNCTIONS ---
+import bcrypt, random, string, yagmail
+
+EMAIL_SENDER = "your_email@gmail.com"      # <-- Replace with your email
+EMAIL_PASSWORD = "your_app_password"       # <-- Replace with your app password
+yag = yagmail.SMTP(EMAIL_SENDER, EMAIL_PASSWORD)
+
+def generate_code(length=6):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
+def register_user(email, password):
+    hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+    code = generate_code()
+    try:
+        c.execute("INSERT INTO users (email, password, verification_code) VALUES (?, ?, ?)", (email, hashed_pw, code))
+        conn.commit()
+        return code
+    except:
+        return None
+
+def verify_user(email, code):
+    c.execute("SELECT verification_code FROM users WHERE email=?", (email,))
+    row = c.fetchone()
+    if row and row[0] == code:
+        c.execute("UPDATE users SET verified=1 WHERE email=?", (email,))
+        conn.commit()
+        return True
+    return False
+
+def login_user(email, password):
+    c.execute("SELECT password, verified FROM users WHERE email=?", (email,))
+    row = c.fetchone()
+    if row and bcrypt.checkpw(password.encode(), row[0]):
+        return row[1] == 1  # Only allow if verified
+    return False
+
+def reset_password(email, new_password):
+    hashed_pw = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt())
+    c.execute("UPDATE users SET password=? WHERE email=?", (hashed_pw, email))
+    conn.commit()
+
+def send_verification_email(email, code):
+    yag.send(email, "Verify Your Account", f"Your verification code is: {code}")
+
+def send_reset_email(email, new_pass):
+    yag.send(email, "Password Reset", f"Your new password is: {new_pass}")
+
+
+
 # 🌈 Page Setup (MUST be first Streamlit command)
 st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
 theme = st.radio("Choose Theme:", ["Light", "Dark"], horizontal=True)
@@ -46,103 +109,54 @@ bg_base64 = get_base64_image("background_image.jpg")  # Make sure the file exist
 # 🌐 Translator
 translator = Translator()
 
-# 🔐 Session state
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-
-# 🔲 Ensure DataFrame
-if 'df' not in st.session_state:
-    st.session_state.df = pd.DataFrame()
-
-
-#Initialize all session state variables at the beginning
-if 'chat_history' not in st.session_state:
-    st.session_state.chat_history = []
-if 'df' not in st.session_state:
-    st.session_state.df = pd.DataFrame()
-if 'last_question' not in st.session_state:
-    st.session_state.last_question = ""
-if 'last_processed_question' not in st.session_state:
-    st.session_state.last_processed_question = ""
-if 'voice_text' not in st.session_state:
-    st.session_state.voice_text = ""
-
-
-# 💠 Custom CSS
-st.markdown(f"""
-    <style>
-    .stApp {{
-        background-image: url("data:image/png;base64,{bg_base64}");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        font-family: 'Segoe UI', sans-serif;
-        color: white;
-    }}
-    .login-container {{
-        width: 100%;
-        max-width: 400px;
-        margin: 10vh auto;
-        padding: 40px;
-        background-color: rgba(0, 0, 0, 0.0);  /* Transparent */
-        text-align: center;
-    }}
-    .login-title {{
-        font-size: 36px;
-        font-weight: bold;
-        margin-bottom: 10px;
-        color: white;
-    }}
-    .login-tagline {{
-        font-size: 16px;
-        color: #ccc;
-        margin-bottom: 30px;
-    }}
-    .stTextInput input {{
-        background-color: #222;
-        color: white;
-    }}
-    .stButton>button {{
-        width: 100%;
-        padding: 10px;
-        border-radius: 10px;
-        background-color: #4B8BBE;
-        color: white;
-        border: none;
-        font-weight: bold;
-        margin-top: 20px;
-    }}
-    .stCheckbox>label {{
-        color: #ccc;
-    }}
-    .forgot a {{
-        color: #9ecbff;
-        font-size: 0.85rem;
-        display: block;
-        margin-top: 10px;
-    }}
-    </style>
-""", unsafe_allow_html=True)
-
-
-
-# 👤 Login UI
-if not st.session_state.authenticated:
+# 👤 Modern Auth UI
+if not st.session_state.get("authenticated", False):
     st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-    
-    username = st.text_input("Username", key="username_input")
-    show_pass = st.checkbox("👁 Show Password", key="show_pass")
-    password = st.text_input("Password", type="default" if show_pass else "password", key="password_input")
+    st.markdown("<h1 class='login-title'>Welcome to TrustHire</h1>", unsafe_allow_html=True)
+    st.markdown("<p class='login-tagline'>Your AI-powered resume scanner</p>", unsafe_allow_html=True)
 
-    st.markdown("<div class='forgot'><a href='#'>Forgot Password?</a></div>", unsafe_allow_html=True)
+    # Tabs for Login/Register/Verify/Forgot
+    auth_tabs = st.tabs(["🔑 Login", "📝 Register", "✅ Verify Email", "🔄 Forgot Password"])
 
-    if st.button("Login"):
-        if username == "admin" and password == "1234":
-            st.session_state.authenticated = True
-            st.success("Login successful")
-            st.rerun()
-        else:
-            st.error("Invalid credentials")
+    with auth_tabs[0]:  # Login
+        email = st.text_input("Email", key="login_email")
+        password = st.text_input("Password", type="password", key="login_pass")
+        if st.button("Login", key="login_btn"):
+            if login_user(email, password):
+                st.session_state.authenticated = True
+                st.session_state.email = email
+                st.success("Login successful!")
+                st.rerun()
+            else:
+                st.error("Invalid credentials or email not verified.")
+
+    with auth_tabs[1]:  # Register
+        new_email = st.text_input("Email", key="reg_email")
+        new_password = st.text_input("Password", type="password", key="reg_pass")
+        if st.button("Register", key="reg_btn"):
+            code = register_user(new_email, new_password)
+            if code:
+                send_verification_email(new_email, code)
+                st.success("Account created! Check your email for the verification code.")
+            else:
+                st.error("Email already registered.")
+
+    with auth_tabs[2]:  # Verify Email
+        verify_email = st.text_input("Email", key="verify_email")
+        verify_code = st.text_input("Verification Code", key="verify_code")
+        if st.button("Verify", key="verify_btn"):
+            if verify_user(verify_email, verify_code):
+                st.success("Email verified! You can now log in.")
+            else:
+                st.error("Invalid verification code.")
+
+    with auth_tabs[3]:  # Forgot Password
+        reset_email = st.text_input("Email", key="reset_email")
+        if st.button("Send New Password", key="reset_btn"):
+            new_pass = generate_code(8)
+            reset_password(reset_email, new_pass)
+            send_reset_email(reset_email, new_pass)
+            st.success("New password sent to your email!")
 
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
