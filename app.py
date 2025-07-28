@@ -33,60 +33,34 @@ c = conn.cursor()
 c.execute("""
     CREATE TABLE IF NOT EXISTS users (
         email TEXT PRIMARY KEY,
-        password TEXT NOT NULL,
-        verified INTEGER DEFAULT 0,
-        verification_code TEXT
+        password TEXT NOT NULL
     )
 """)
 conn.commit()
 
-
-
-# --- USER AUTHENTICATION FUNCTIONS ---
-EMAIL_SENDER = "your_email@gmail.com"      # <-- Replace with your email
-EMAIL_PASSWORD = "your_app_password"       # <-- Replace with your app password
-yag = yagmail.SMTP(EMAIL_SENDER, EMAIL_PASSWORD)
-
-def generate_code(length=6):
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
-
 def register_user(email, password):
-    hashed_pw = bcrypt.hash(password)  # Passlib bcrypt
-    code = generate_code()
+    hashed_pw = bcrypt.hash(password)
     try:
-        c.execute("INSERT INTO users (email, password, verification_code) VALUES (?, ?, ?)", (email, hashed_pw, code))
+        c.execute("INSERT INTO users (email, password) VALUES (?, ?)", (email, hashed_pw))
         conn.commit()
-        return code
+        return True
     except:
-        return None
+        return False  # agar email already exist hai
 
-def verify_user(email, code):
-    c.execute("SELECT verification_code FROM users WHERE email=?", (email,))
+def login_user(email, password):
+    c.execute("SELECT password FROM users WHERE email=?", (email,))
     row = c.fetchone()
-    if row and row[0] == code:
-        c.execute("UPDATE users SET verified=1 WHERE email=?", (email,))
-        conn.commit()
+    if row and bcrypt.verify(password, row[0]):
         return True
     return False
 
-def login_user(email, password):
-    c.execute("SELECT password, verified FROM users WHERE email=?", (email,))
-    row = c.fetchone()
-    if row and bcrypt.verify(password, row[0]):  # Passlib bcrypt verify
-        return row[1] == 1
-    return False
-
 def reset_password(email, new_password):
-    hashed_pw = bcrypt.hash(new_password)  # Passlib bcrypt
+    hashed_pw = bcrypt.hash(new_password)
     c.execute("UPDATE users SET password=? WHERE email=?", (hashed_pw, email))
     conn.commit()
 
-def send_verification_email(email, code):
-    yag.send(email, "Verify Your Account", f"Your verification code is: {code}")
-
-def send_reset_email(email, new_pass):
-    yag.send(email, "Password Reset", f"Your new password is: {new_pass}")
-
+def generate_code(length=8):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
 
 # 🌈 Page Setup (MUST be first Streamlit command)
@@ -164,8 +138,7 @@ if not st.session_state.get("authenticated", False):
     st.markdown("<h1 class='login-title'>Welcome to TrustHire</h1>", unsafe_allow_html=True)
     st.markdown("<p class='login-tagline'>Your AI-powered resume scanner</p>", unsafe_allow_html=True)
 
-    # Tabs for Login/Register/Verify/Forgot
-    auth_tabs = st.tabs(["🔑 Login", "📝 Register", "✅ Verify Email", "🔄 Forgot Password"])
+    auth_tabs = st.tabs(["🔑 Login", "📝 Register", "🔄 Forgot Password"])
 
     with auth_tabs[0]:  # Login
         email = st.text_input("Email", key="login_email")
@@ -177,35 +150,23 @@ if not st.session_state.get("authenticated", False):
                 st.success("Login successful!")
                 st.rerun()
             else:
-                st.error("Invalid credentials or email not verified.")
+                st.error("Invalid credentials.")
 
     with auth_tabs[1]:  # Register
         new_email = st.text_input("Email", key="reg_email")
         new_password = st.text_input("Password", type="password", key="reg_pass")
         if st.button("Register", key="reg_btn"):
-            code = register_user(new_email, new_password)
-            if code:
-                send_verification_email(new_email, code)
-                st.success("Account created! Check your email for the verification code.")
+            if register_user(new_email, new_password):
+                st.success("Account created! You can now log in.")
             else:
                 st.error("Email already registered.")
 
-    with auth_tabs[2]:  # Verify Email
-        verify_email = st.text_input("Email", key="verify_email")
-        verify_code = st.text_input("Verification Code", key="verify_code")
-        if st.button("Verify", key="verify_btn"):
-            if verify_user(verify_email, verify_code):
-                st.success("Email verified! You can now log in.")
-            else:
-                st.error("Invalid verification code.")
-
-    with auth_tabs[3]:  # Forgot Password
+    with auth_tabs[2]:  # Forgot Password
         reset_email = st.text_input("Email", key="reset_email")
-        if st.button("Send New Password", key="reset_btn"):
-            new_pass = generate_code(8)
+        new_pass = st.text_input("New Password", type="password", key="reset_pass")
+        if st.button("Reset Password", key="reset_btn"):
             reset_password(reset_email, new_pass)
-            send_reset_email(reset_email, new_pass)
-            st.success("New password sent to your email!")
+            st.success("Password updated! Now you can log in.")
 
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
