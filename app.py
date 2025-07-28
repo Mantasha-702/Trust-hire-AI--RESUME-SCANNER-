@@ -640,7 +640,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
     future_suggestions = {skill: demand for skill, demand in trending_skills.items() if skill.lower() not in current_skills}
 
     # Debug mode toggle
-    if st.checkbox("Show Debug Info"):
+    if st.checkbox("Show Debug Info", key="future_skills_debug"):
         st.write("Detected Role from Resume:", extracted_role, f"(Confidence: {role_confidence}%)")
         st.write("Matched Role for Trending Skills:", matched_role, f"(Confidence: {match_confidence}%)")
         st.write("Trending Skills for this Role:", trending_skills)
