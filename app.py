@@ -28,6 +28,8 @@ from passlib.hash import bcrypt
 import random, string  
 import requests
 import plotly.graph_objects as go
+from fpdf import FPDF
+
 
 # --- USER AUTHENTICATION DATABASE ---
 conn = sqlite3.connect("users.db")
@@ -467,25 +469,24 @@ if "df" in st.session_state and not st.session_state.df.empty:
         st.plotly_chart(generate_skill_tree(future_suggestions), use_container_width=True)
 
         # --- PDF Roadmap
-        from fpdf import FPDF
-        import tempfile
         def generate_pdf(candidate, role, skills, career_path):
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_font("Arial", "B", 16)
-            pdf.cell(200, 10, f"Future Skills Roadmap for {candidate}", ln=True, align="C")
-            pdf.set_font("Arial", size=12)
-            pdf.cell(200, 10, f"Target Role: {role}", ln=True)
-            pdf.ln(10)
-            for skill, demand in skills.items():
-                pdf.multi_cell(0, 10, f"- {skill}: {demand}% demand.")
-            pdf.ln(10)
-            pdf.cell(200, 10, "Predicted Career Path:", ln=True)
-            for step in career_path:
-                pdf.multi_cell(0, 10, f"→ {step}")
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-            pdf.output(temp_file.name)
-            return temp_file.name
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.add_font("DejaVu", "", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", uni=True)
+    pdf.set_font("DejaVu", "", 14)
+    pdf.cell(0, 10, f"Future Skills Roadmap for {candidate}", ln=True, align="C")
+    pdf.set_font("DejaVu", "", 12)
+    pdf.cell(0, 10, f"Target Role: {role}", ln=True)
+    pdf.ln(10)
+    for skill, demand in skills.items():
+        pdf.multi_cell(0, 10, f"- {skill}: {demand}% demand.")
+    pdf.ln(10)
+    pdf.cell(0, 10, "Predicted Career Path:", ln=True)
+    for step in career_path:
+        pdf.multi_cell(0, 10, f"→ {step}")  # Now Unicode arrow works
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    pdf.output(temp_file.name)
+    return temp_file.name
 
         pdf_path = generate_pdf(candidate_name, extracted_role, future_suggestions, career_path)
         with open(pdf_path, "rb") as f:
