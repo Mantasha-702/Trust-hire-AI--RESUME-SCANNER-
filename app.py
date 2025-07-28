@@ -488,6 +488,10 @@ def generate_pdf(candidate, role, skills, career_path):
     pdf.output(temp_file.name)
     return temp_file.name  # <-- yahan function khatam hota hai
 
+# --- Prepare future suggestions
+current_skills = [s.strip().lower() for s in selected_row["Skills"].split(",")]
+future_suggestions = {skill: demand for skill, demand in trending_skills.items() if skill.lower() not in current_skills}
+
 # ---- Function ends here ----
 if future_suggestions:
     pdf_path = generate_pdf(candidate_name, extracted_role, future_suggestions, career_path)
