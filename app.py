@@ -486,19 +486,20 @@ def generate_pdf(candidate, role, skills, career_path):
         pdf.multi_cell(0, 10, f"→ {step}")  # Now Unicode arrow works
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
     pdf.output(temp_file.name)
-    return temp_file.name
+    return temp_file.name  # <-- yahan function khatam hota hai
 
-        pdf_path = generate_pdf(candidate_name, extracted_role, future_suggestions, career_path)
-        with open(pdf_path, "rb") as f:
-            st.download_button("📥 Download Personalized Roadmap PDF", f, file_name=f"{candidate_name}_roadmap.pdf")
+# ---- Function ends here ----
 
-    else:
-        st.warning("⚠️ No matching future skills found for this role.")
+pdf_path = generate_pdf(candidate_name, extracted_role, future_suggestions, career_path)
+with open(pdf_path, "rb") as f:
+    st.download_button(
+        "📥 Download Personalized Roadmap PDF",
+        f,
+        file_name=f"{candidate_name}_roadmap.pdf"
+    )
 
-
-
-# =================== STREAMLIT DISPLAY ===================
-
+else:
+    st.warning("⚠️ No matching future skills found for this role.")
 
 def process_resumes(uploaded_files):
     rows = []
