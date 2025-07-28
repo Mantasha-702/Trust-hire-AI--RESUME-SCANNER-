@@ -24,6 +24,9 @@ import random
 import webbrowser
 import tempfile
 from fpdf import FPDF
+import bcrypt      
+import random, string  
+
 
 
 # --- USER AUTHENTICATION DATABASE ---
