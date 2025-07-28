@@ -620,7 +620,11 @@ st.markdown("## 📈 Future Skills Predictor")
 
 if "df" in st.session_state and not st.session_state.df.empty:
     # Select candidate
-    selected_name = st.selectbox("🔍 Select Candidate for Future Skills Prediction", st.session_state.df["Name"])
+    selected_name = st.selectbox(
+    "🔍 Select Candidate for Future Skills Prediction",
+    st.session_state.df["Name"],
+    key="future_skills_selectbox"
+    )
     selected_row = st.session_state.df[st.session_state.df["Name"] == selected_name].iloc[0]
     candidate_name = selected_row["Name"]
     candidate_role_text = selected_row["Job Role"]
