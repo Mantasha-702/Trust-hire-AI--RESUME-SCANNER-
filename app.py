@@ -63,6 +63,21 @@ def generate_code(length=8):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
 
+# --- Initialize Session State Variables ---
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "email" not in st.session_state:
+    st.session_state.email = None
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []  # empty list for chat messages
+if "last_question" not in st.session_state:
+    st.session_state.last_question = ""
+if "last_processed_question" not in st.session_state:
+    st.session_state.last_processed_question = ""
+if "voice_text" not in st.session_state:
+    st.session_state.voice_text = ""
+
+
 # 🌈 Page Setup (MUST be first Streamlit command)
 st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
 theme = st.radio("Choose Theme:", ["Light", "Dark"], horizontal=True)
