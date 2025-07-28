@@ -489,17 +489,17 @@ def generate_pdf(candidate, role, skills, career_path):
     return temp_file.name  # <-- yahan function khatam hota hai
 
 # ---- Function ends here ----
-
-pdf_path = generate_pdf(candidate_name, extracted_role, future_suggestions, career_path)
-with open(pdf_path, "rb") as f:
-    st.download_button(
-        "📥 Download Personalized Roadmap PDF",
-        f,
-        file_name=f"{candidate_name}_roadmap.pdf"
-    )
-
+if future_suggestions:
+    pdf_path = generate_pdf(candidate_name, extracted_role, future_suggestions, career_path)
+    with open(pdf_path, "rb") as f:
+        st.download_button(
+            "📥 Download Personalized Roadmap PDF",
+            f,
+            file_name=f"{candidate_name}_roadmap.pdf"
+        )
 else:
     st.warning("⚠️ No matching future skills found for this role.")
+
 
 def process_resumes(uploaded_files):
     rows = []
