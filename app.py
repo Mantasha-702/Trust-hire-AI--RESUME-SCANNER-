@@ -469,7 +469,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
         st.plotly_chart(generate_skill_tree(future_suggestions), use_container_width=True)
 
         # --- PDF Roadmap
-        def generate_pdf(candidate, role, skills, career_path):
+def generate_pdf(candidate, role, skills, career_path):
     pdf = FPDF()
     pdf.add_page()
     pdf.add_font("DejaVu", "", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", uni=True)
