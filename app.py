@@ -437,6 +437,7 @@ else:
         filtered = filtered[filtered["Graduation Year"].isin(grad_filter)]
     if date_filter:
         filtered = filtered[filtered["Date Uploaded"].isin(date_filter)]
+    st.session_state.filtered = filtered
 
     # 👁️ Show filtered table
     if "Full Text" in filtered.columns:
@@ -468,12 +469,14 @@ st.markdown("## 📈 Future Skills Predictor")
 
 if "df" in st.session_state and not st.session_state.df.empty:
     # Candidate Selection
+   # Use filtered data if available, otherwise full df
+    data_source = st.session_state.get("filtered", st.session_state.df)
     selected_name = st.selectbox(
         "🔍 Select Candidate for Future Skills Prediction",
-        st.session_state.df["Name"],
+        data_source["Name"],
         key="future_skills_selectbox"
     )
-    selected_row = st.session_state.df[st.session_state.df["Name"] == selected_name].iloc[0]
+    selected_row = data_source[data_source["Name"] == selected_name].iloc[0]
     candidate_name = selected_row["Name"]
     candidate_role_text = selected_row["Job Role"]
 
