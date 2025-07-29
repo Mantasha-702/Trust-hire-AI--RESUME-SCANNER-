@@ -467,34 +467,33 @@ else:
 st.markdown("## 📈 Future Skills Predictor")
 
 if "df" in st.session_state and not st.session_state.df.empty:
-    # Select candidate
+    # Candidate Selection
     selected_name = st.selectbox(
-    "🔍 Select Candidate for Future Skills Prediction",
-    st.session_state.df["Name"],
-    key="future_skills_selectbox"
+        "🔍 Select Candidate for Future Skills Prediction",
+        st.session_state.df["Name"],
+        key="future_skills_selectbox"
     )
     selected_row = st.session_state.df[st.session_state.df["Name"] == selected_name].iloc[0]
     candidate_name = selected_row["Name"]
     candidate_role_text = selected_row["Job Role"]
 
-    # Extract role with confidence
+    # Extract role & trending skills
     extracted_role, role_confidence = extract_role(candidate_role_text)
-
-    # Get trending skills with matched role
     trending_skills, matched_role, match_confidence = fetch_trending_skills_from_api(extracted_role)
 
-    # Normalize skills for comparison
+    # Current & future skills
     current_skills = [s.strip().lower() for s in selected_row["Skills"].split(",")]
     future_suggestions = {skill: demand for skill, demand in trending_skills.items() if skill.lower() not in current_skills}
 
-    # Debug mode toggle
+    # Debug mode
     if st.checkbox("Show Debug Info", key="future_skills_debug"):
-        st.write("Detected Role from Resume:", extracted_role, f"(Confidence: {role_confidence}%)")
-        st.write("Matched Role for Trending Skills:", matched_role, f"(Confidence: {match_confidence}%)")
-        st.write("Trending Skills for this Role:", trending_skills)
+        st.write("Detected Role:", extracted_role, f"(Confidence: {role_confidence}%)")
+        st.write("Matched Role:", matched_role, f"(Confidence: {match_confidence}%)")
+        st.write("Trending Skills:", trending_skills)
         st.write("Current Skills:", current_skills)
         st.write("Suggested Skills:", future_suggestions)
 
+    # If we have suggestions
     if future_suggestions:
         st.markdown("### 💡 Suggested Skills for the Future:")
         cols = st.columns(2)
@@ -518,13 +517,15 @@ if "df" in st.session_state and not st.session_state.df.empty:
                 </div>
                 """, unsafe_allow_html=True)
 
-        # 📥 Download Roadmap PDF
+        # PDF Download
         pdf_path = generate_pdf(candidate_name, matched_role or extracted_role, future_suggestions)
         with open(pdf_path, "rb") as f:
-            st.download_button("📥 Download Personalized Roadmap PDF", f, file_name="Future_Skills_Roadmap.pdf")
-
+            st.download_button("📥 Download Personalized Roadmap PDF", f, file_name=f"{candidate_name}_roadmap.pdf")
     else:
         st.warning("⚠️ No matching future skills found. Try updating role extraction or adding more skills to resume.")
+else:
+    st.info("📥 Please upload and process resumes first.")
+
     # -------------------- Email Section --------------------
     EMAIL_SENDER = "your_email@gmail.com"
     EMAIL_PASSWORD = "your_app_password"  # use your Gmail App Password
