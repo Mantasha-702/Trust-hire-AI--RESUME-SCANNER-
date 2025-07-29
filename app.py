@@ -489,6 +489,18 @@ def generate_pdf(candidate, role, skills, career_path):
     return temp_file.name  # <-- yahan function khatam hota hai
 
 # --- Prepare future suggestions
+
+# Candidate selection (safe)
+if "df" in st.session_state and not st.session_state.df.empty:
+    selected_index = st.selectbox("Select a candidate for future roadmap", st.session_state.df.index)
+    selected_row = st.session_state.df.loc[selected_index]
+    candidate_name = selected_row["Name"]
+    extracted_role = selected_row["Job Role"]
+else:
+    st.warning("⚠️ Please upload and process resumes first.")
+    st.stop()
+
+# Ab current skills nikalna safe hai
 current_skills = [s.strip().lower() for s in selected_row["Skills"].split(",")]
 future_suggestions = {skill: demand for skill, demand in trending_skills.items() if skill.lower() not in current_skills}
 
