@@ -31,6 +31,12 @@ import plotly.graph_objects as go
 from fpdf import FPDF
 
 
+
+for key in ["df", "filtered", "chat_history", "voice_text"]:
+    if key not in st.session_state:
+        st.session_state[key] = pd.DataFrame() if key in ["df", "filtered"] else []
+
+
 # --- USER AUTHENTICATION DATABASE ---
 conn = sqlite3.connect("users.db")
 c = conn.cursor()
@@ -329,19 +335,24 @@ def suggest_future_skills(current_skills, role):
     return {skill: demand for skill, demand in skills_data.items() if skill.lower() not in current}
 
 
-def generate_pdf(candidate_name, role, suggestions):
+def generate_pdf(candidate, role, skills):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", "B", 16)
-    pdf.cell(200, 10, f"Future Skills Roadmap for {candidate_name}", ln=True, align="C")
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, f"Target Role: {role}", ln=True)
+    pdf.add_font("DejaVu", "", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", uni=True)
+    pdf.set_font("DejaVu", "", 14)
+    pdf.cell(0, 10, f"Future Skills Roadmap for {candidate}", ln=True, align="C")
+    pdf.set_font("DejaVu", "", 12)
+    pdf.cell(0, 10, f"Target Role: {role}", ln=True)
     pdf.ln(10)
-    for skill, demand in suggestions.items():
-        pdf.multi_cell(0, 10, f"- {skill} ({demand}% Demand) - Learn here: https://www.coursera.org/search?query={skill}")
+    for skill, demand in skills.items():
+        # Only text (no raw URL)
+        pdf.multi_cell(0, 10, f"- {skill} ({demand}% Demand)")
+    pdf.ln(10)
+    pdf.cell(0, 10, "For more details, visit Coursera and search these skills.", ln=True)
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
     pdf.output(temp_file.name)
     return temp_file.name
+
 
 def generate_summary(row):
     return f"{row['Name']} has {row['Experience']} of experience in {row['Skills']}. They graduated in {row['Graduation Year']} and expect {row['Expected Salary']} salary."
