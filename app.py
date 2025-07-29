@@ -468,9 +468,12 @@ else:
 st.markdown("## 📈 Future Skills Predictor")
 
 # Safe source: filtered data if exists, otherwise full df
-data_source = st.session_state.get("filtered") or st.session_state.get("df")
-
-if data_source is not None and not data_source.empty:
+data_source = st.session_state.get("filtered")
+if data_source is None or data_source.empty:
+    data_source = st.session_state.get("df")
+if data_source is None or data_source.empty:
+    st.warning("⚠️ Please upload and process resumes first.")
+    st.stop()
     # Candidate Selection
     selected_name = st.selectbox(
         "🔍 Select Candidate for Future Skills Prediction",
