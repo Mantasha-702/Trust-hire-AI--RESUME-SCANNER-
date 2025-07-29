@@ -467,10 +467,11 @@ else:
 # -------------------- Future Skills Predictor (Smart + Debug Info) --------------------
 st.markdown("## 📈 Future Skills Predictor")
 
-if "df" in st.session_state and not st.session_state.df.empty:
+# Safe source: filtered data if exists, otherwise full df
+data_source = st.session_state.get("filtered") or st.session_state.get("df")
+
+if data_source is not None and not data_source.empty:
     # Candidate Selection
-   # Use filtered data if available, otherwise full df
-    data_source = st.session_state.get("filtered", st.session_state.df)
     selected_name = st.selectbox(
         "🔍 Select Candidate for Future Skills Prediction",
         data_source["Name"],
@@ -479,7 +480,6 @@ if "df" in st.session_state and not st.session_state.df.empty:
     selected_row = data_source[data_source["Name"] == selected_name].iloc[0]
     candidate_name = selected_row["Name"]
     candidate_role_text = selected_row["Job Role"]
-
     # Extract role & trending skills
     extracted_role, role_confidence = extract_role(candidate_role_text)
     trending_skills, matched_role, match_confidence = fetch_trending_skills_from_api(extracted_role)
@@ -557,16 +557,39 @@ else:
             except Exception as e:
                 st.error(f"❌ Failed for {email}: {e}")
 
-    st.markdown("## 📧 Send Interview Emails")
-    selected_names = st.multiselect("👥 Select Candidates", filtered["Name"].unique())
-    interview_date = st.date_input("📅 Interview Date", value=datetime.now())
-    interview_time = st.time_input("⏰ Time", value=datetime.now().time())
+# -------------------- Send Interview Emails --------------------
+st.markdown("## 📧 Send Interview Emails")
 
-    if st.button("📨 Send Emails"):
-        if selected_names:
-            send_batch_emails(filtered, selected_names, interview_date.strftime('%d %B %Y'), interview_time.strftime('%I:%M %p'))
-        else:
-            st.warning("⚠️ Select at least one candidate.")
+# Safe source: filtered data if available, otherwise full df
+data_source = st.session_state.get("filtered") or st.session_state.get("df")
+if data_source is None or data_source.empty:
+    st.warning("⚠️ Please upload and process resumes first.")
+    st.stop()
+
+# Select candidates
+selected_names = st.multiselect("👥 Select Candidates", data_source["Name"].unique())
+interview_date = st.date_input("📅 Interview Date", value=datetime.now())
+interview_time = st.time_input("⏰ Time", value=datetime.now().time())
+
+email_subject = st.text_input("📌 Email Subject", "Interview Invitation - TrustHire")
+email_body_template = st.text_area(
+    "📄 Email Body (use {name}, {date}, {time} placeholders)",
+    "Dear {name},\n\nWe are pleased to invite you for an interview on {date} at {time}.\n\nBest Regards,\nTrustHire Team"
+)
+
+if st.button("📤 Send Emails"):
+    if selected_names:
+        for name in selected_names:
+            row = data_source[data_source["Name"] == name].iloc[0]
+            email = row["Email"]
+            body = email_body_template.format(name=name, date=interview_date, time=interview_time)
+            try:
+                yag.send(email, email_subject, body)
+                st.success(f"Email sent to {name} ({email})")
+            except Exception as e:
+                st.error(f"Failed to send email to {name} ({email}): {e}")
+    else:
+        st.warning("⚠️ Please select at least one candidate.")
 
 
 
