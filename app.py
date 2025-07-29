@@ -30,8 +30,6 @@ import requests
 import plotly.graph_objects as go
 from fpdf import FPDF
 
-
-
 for key in ["df", "filtered", "chat_history", "voice_text"]:
     if key not in st.session_state:
         st.session_state[key] = pd.DataFrame() if key in ["df", "filtered"] else []
@@ -344,14 +342,22 @@ def generate_pdf(candidate, role, skills):
     pdf.set_font("DejaVu", "", 12)
     pdf.cell(0, 10, f"Target Role: {role}", ln=True)
     pdf.ln(10)
+
+    max_width = pdf.w - 20  # page width - margins
     for skill, demand in skills.items():
-        # Only text (no raw URL)
-        pdf.multi_cell(0, 10, f"- {skill} ({demand}% Demand)")
+        safe_text = f"- {skill} ({demand}% Demand)"
+        # agar text bahut lamba hai, break karo
+        while len(safe_text) > 80:
+            pdf.multi_cell(max_width, 10, safe_text[:80])
+            safe_text = safe_text[80:]
+        pdf.multi_cell(max_width, 10, safe_text)
     pdf.ln(10)
-    pdf.cell(0, 10, "For more details, visit Coursera and search these skills.", ln=True)
+    pdf.multi_cell(max_width, 10, "For more details, visit Coursera and search these skills.")
+    
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
     pdf.output(temp_file.name)
     return temp_file.name
+
 
 
 def generate_summary(row):
@@ -544,32 +550,37 @@ else:
     st.warning("⚠️ No matching future skills found. Try updating role extraction or adding more skills to resume.")
 
     # -------------------- Email Section --------------------
-    EMAIL_SENDER = "your_email@gmail.com"
-    EMAIL_PASSWORD = "your_app_password"  # use your Gmail App Password
+EMAIL_SENDER = "your_email@gmail.com"
+EMAIL_PASSWORD = "your_app_password"  # use your Gmail App Password
 
-    def generate_email_html(name, role, date, time):
-        return f"""
-        <html><body style='font-family: Arial;'>
-        <h2 style='color: green;'>🎉 Interview Invitation</h2>
-        <p>Hello <b>{name}</b>,</p>
-        <p>You are shortlisted for the <b>{role}</b> role.</p>
-        <p><b>Date:</b> {date}<br><b>Time:</b> {time}</p>
-        <p>Best of luck!<br><i>- TrustHire Team</i></p>
-        </body></html>"""
+def generate_email_html(name, role, date, time):
+    return f"""
+    <html><body style='font-family: Arial;'>
+    <h2 style='color: green;'>🎉 Interview Invitation</h2>
+    <p>Hello <b>{name}</b>,</p>
+    <p>You are shortlisted for the <b>{role}</b> role.</p>
+    <p><b>Date:</b> {date}<br><b>Time:</b> {time}</p>
+    <p>Best of luck!<br><i>- TrustHire Team</i></p>
+    </body></html>"""
 
-    def send_batch_emails(df, selected_names, date, time):
-        import yagmail
+def send_batch_emails(df, selected_names, date, time):
+    import yagmail
+    try:
         yag = yagmail.SMTP(EMAIL_SENDER, EMAIL_PASSWORD)
-        for _, row in df[df['Name'].isin(selected_names)].iterrows():
-            name = row["Name"]
-            email = row["Email"]
-            role = row["Job Role"]
-            html = generate_email_html(name, role, date, time)
-            try:
-                yag.send(to=email, subject=f"Interview Invitation for {role}", contents=html)
-                st.success(f"✅ Sent to {name} ({email})")
-            except Exception as e:
-                st.error(f"❌ Failed for {email}: {e}")
+    except Exception as e:
+        st.error("❌ Email service initialization failed. Please check Gmail ID and App Password.")
+        return
+
+    for _, row in df[df['Name'].isin(selected_names)].iterrows():
+        name = row["Name"]
+        email = row["Email"]
+        role = row["Job Role"]
+        html = generate_email_html(name, role, date, time)
+        try:
+            yag.send(to=email, subject=f"Interview Invitation for {role}", contents=html)
+            st.success(f"✅ Sent to {name} ({email})")
+        except Exception as e:
+            st.error(f"❌ Failed for {email}: {e}")
 
 # -------------------- Send Interview Emails --------------------
 st.markdown("## 📧 Send Interview Emails")
@@ -581,6 +592,7 @@ if data_source is None or data_source.empty:
 if data_source is None or data_source.empty:
     st.warning("⚠️ Please upload and process resumes first.")
     st.stop()
+
 
 # Select candidates
 selected_names = st.multiselect("👥 Select Candidates", data_source["Name"].unique())
@@ -1044,6 +1056,11 @@ if st.button("🗑️ Clear Chat History", key="clear_chat"):
 
 
 # 🔈 Final Voice Summary Section (Modern Layout with Language Toggle)
+if st.session_state.df.empty:
+    st.warning("No resumes available for summary.")
+else:
+    top = st.session_state.df.loc[st.session_state.df["Interview Score"].idxmax()]
+    
 if "df" in st.session_state and not st.session_state.df.empty:
     df = st.session_state.df
 
