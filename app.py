@@ -479,8 +479,7 @@ else:
         mime="application/json",
         key="filtered_json_download"
     )
-# -------------------- Future Skills Predictor (Smart + Debug Info) --------------------
-st.markdown("## 📈 Future Skills Predictor")
+# -------------------- Future Skills Predictor (Smart + Debug Info) --------------------st.markdown("## 📈 Future Skills Predictor")
 
 # Safe source
 data_source = st.session_state.get("filtered")
@@ -512,11 +511,10 @@ future_suggestions = {skill: demand for skill, demand in trending_skills.items()
 if st.checkbox("Show Debug Info", key="future_skills_debug"):
     st.write("Detected Role:", extracted_role, f"(Confidence: {role_confidence}%)")
     st.write("Matched Role:", matched_role, f"(Confidence: {match_confidence}%)")
-    st.write("Trending Skills:", trending_skills)
     st.write("Current Skills:", current_skills)
     st.write("Suggested Skills:", future_suggestions)
 
-# If we have suggestions
+# If we have suggestions (cards + PDF)
 if future_suggestions:
     st.markdown("### 💡 Suggested Skills for the Future:")
     cols = st.columns(2)
