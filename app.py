@@ -88,8 +88,6 @@ if "voice_text" not in st.session_state:
 
 # 🌈 Page Setup (MUST be first Streamlit command)
 st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
-theme = st.radio("Choose Theme:", ["Light", "Dark"], horizontal=True)
-
 
 # 📍 Path Configuration
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
