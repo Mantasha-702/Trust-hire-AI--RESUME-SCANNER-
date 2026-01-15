@@ -342,13 +342,31 @@ def extract_role(text):
     best_match, score = process.extractOne(text, roles)
     return (best_match if score >= 50 else "Software Engineer", score if score >= 50 else 0)
 
+def safe_exp_to_number(exp):
+    """
+    Converts experience string to numeric years.
+    Returns 0 if Fresher or cannot parse.
+    """
+    if not exp:
+        return 0
+    exp = str(exp).lower()
+    if "fresher" in exp:
+        return 0
+    num_match = re.search(r"\d+", exp)
+    if num_match:
+        num = int(num_match.group())
+        if "month" in exp:
+            return round(num / 12, 2)
+        return num
+    return 0
 
 def interview_score(skills, exp):
     base = len(skills.split(", ")) * 5 if skills != "Not Mentioned" else 0
     exp_num = safe_exp_to_number(exp)
     exp_score = exp_num * 2
-    return base + exp_score 
-    
+    return base + exp_score
+
+
 def get_rating(score):
     stars = min(5, score // 10)
     return "⭐" * stars
@@ -1200,6 +1218,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
 
 
