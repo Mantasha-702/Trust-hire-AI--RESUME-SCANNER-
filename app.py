@@ -419,7 +419,7 @@ def process_resumes(uploaded_files):
 
         name = extract_name(text)
 
-if "linkedin" in name.lower() or "/" in name:
+if "linkedin" in name.lower() or "/" in name:   # ❌ This line is **outside** the for-loop due to wrong indentation
     name = "Not found"
 
         email = extract_email(text)
@@ -429,6 +429,7 @@ if "linkedin" in name.lower() or "/" in name:
         skills = extract_skills(text)
 
         exp_obj = extract_experience(text)
+
         exp = exp_obj["value"]
         exp_lvl = classify_experience(exp_obj)
 
@@ -1201,4 +1202,5 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
