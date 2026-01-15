@@ -409,8 +409,8 @@ def generate_pdf(candidate, role, skills):
 
 def generate_summary(row):
     return f"{row['Name']} has {row['Experience']} of experience in {row['Skills']}. They graduated in {row['Graduation Year']} and expect {row['Expected Salary']} salary."
-#UPLOAD FILES
 
+#UPLOAD RESUMES
 def process_resumes(uploaded_files):
     rows = []
 
@@ -419,9 +419,11 @@ def process_resumes(uploaded_files):
 
         name = extract_name(text)
 
-if "linkedin" in name.lower() or "/" in name:   # ❌ This line is **outside** the for-loop due to wrong indentation
-    name = "Not found"
+        # ✅ This if block is properly inside the for-loop
+        if "linkedin" in name.lower() or "/" in name:
+            name = "Not found"
 
+        # Everything else stays at the same level as name assignment
         email = extract_email(text)
         phone = extract_phone(text)
         edu = extract_education(text)
@@ -429,7 +431,6 @@ if "linkedin" in name.lower() or "/" in name:   # ❌ This line is **outside** t
         skills = extract_skills(text)
 
         exp_obj = extract_experience(text)
-
         exp = exp_obj["value"]
         exp_lvl = classify_experience(exp_obj)
 
@@ -1202,5 +1203,6 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
 
