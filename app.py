@@ -227,11 +227,27 @@ def extract_text_from_pdf(file):
     return text
 
 def extract_name(text):
-    lines = text.strip().split("\n")
-    for line in lines[:5]:
-        if line and "@" not in line and not re.search(r"\d", line):
-            return line.strip()
+    lines = text.split("\n")
+
+    for line in lines[:10]:  # top part of resume
+        line = line.strip()
+
+        if (
+            "linkedin" in line.lower()
+            or "http" in line.lower()
+            or "www" in line.lower()
+            or ".com" in line.lower()
+            or "@" in line
+            or len(line.split()) > 4
+        ):
+            continue
+
+        # ✅ clean name format
+        if re.match(r"^[A-Z][a-z]+ [A-Z][a-z]+$", line):
+            return line
+
     return "Not found"
+
 
 def extract_email(text):
     match = re.search(r"[\w\.-]+@[\w\.-]+", text)
@@ -252,20 +268,53 @@ def extract_skills(text):
     return ", ".join(found) if found else "Not Mentioned"
 
 def extract_experience(text):
-    match = re.search(r"(\d{1,2})\+?\s*(years|yrs|year|yr)", text, re.IGNORECASE)
-    return int(match.group(1)) if match else None
+    text_lower = text.lower()
 
-def classify_experience(exp):
-    if exp is None:
-        return "Unspecified"
-    elif exp <= 1:
-        return "0–1 year"
-    elif exp <= 3:
-        return "1–3 years"
-    elif exp <= 5:
-        return "3–5 years"
-    else:
-        return "5+ years"
+    # 🎓 Fresher detection
+    fresher_keywords = ["fresher", "entry level", "recent graduate", "no experience"]
+    if any(k in text_lower for k in fresher_keywords):
+        return {"type": "fresher", "value": "Fresher"}
+
+    # 🧑‍💼 Internship detection
+    internship_match = re.search(
+        r"(\d{1,2})\s*(months|month|mos|mo).*?(internship|intern)",
+        text_lower
+    )
+    if internship_match:
+        months = internship_match.group(1)
+        return {
+            "type": "internship",
+            "value": f"{months} months internship experience"
+        }
+
+    # 💼 Full-time experience
+    year_match = re.search(r"(\d{1,2})\+?\s*(years|year|yrs|yr)", text_lower)
+    if year_match:
+        years = int(year_match.group(1))
+        return {
+            "type": "fulltime",
+            "value": f"{years} years"
+        }
+
+    # ❌ Nothing mentioned → Fresher
+    return {"type": "fresher", "value": "Fresher"}
+
+def classify_experience(exp_obj):
+    if exp_obj["type"] == "fresher":
+        return "Fresher"
+    elif exp_obj["type"] == "internship":
+        return "Internship"
+    elif exp_obj["type"] == "fulltime":
+        years = int(re.search(r"\d+", exp_obj["value"]).group())
+        if years <= 1:
+            return "0–1 year"
+        elif years <= 3:
+            return "1–3 years"
+        elif years <= 5:
+            return "3–5 years"
+        else:
+            return "5+ years"
+    return "Unspecified"
 
 def extract_graduation_year(text):
     match = re.findall(r"\b(19\d{2}|20\d{2})\b", text)
@@ -367,18 +416,29 @@ def process_resumes(uploaded_files):
 
     for file in uploaded_files:
         text = extract_text_from_pdf(file)
+
         name = extract_name(text)
+
+if "linkedin" in name.lower() or "/" in name:
+    name = "Not found"
+
         email = extract_email(text)
         phone = extract_phone(text)
         edu = extract_education(text)
         grad = extract_graduation_year(text)
         skills = extract_skills(text)
-        exp = extract_experience(text)
-        exp_lvl = classify_experience(exp)
+
+        exp_obj = extract_experience(text)
+        exp = exp_obj["value"]
+        exp_lvl = classify_experience(exp_obj)
+
         location = extract_location(text)
         salary = extract_salary(text)
-        role, role_confidence = extract_role(text)  # <-- Correct indentation
+
+        role, role_confidence = extract_role(text)
+
         score = interview_score(skills, exp)
+
         summary = generate_summary({
             "Name": name,
             "Skills": skills,
@@ -394,10 +454,10 @@ def process_resumes(uploaded_files):
             "Education": edu,
             "Graduation Year": grad,
             "Skills": skills,
-            "Experience": f"{exp} years" if exp else "Unspecified",
+            "Experience": exp,
             "Experience Level": exp_lvl,
             "Expected Salary": salary,
-            "Job Role": role,  # <-- Only the role string
+            "Job Role": role,
             "Location": location,
             "Interview Score": score,
             "Rating": get_rating(score),
@@ -407,7 +467,6 @@ def process_resumes(uploaded_files):
         })
 
     return pd.DataFrame(rows)
-
 
 
 # -------------------- Upload Resumes --------------------
@@ -1142,3 +1201,4 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
