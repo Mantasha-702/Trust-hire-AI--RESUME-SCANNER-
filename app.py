@@ -345,9 +345,10 @@ def extract_role(text):
 
 def interview_score(skills, exp):
     base = len(skills.split(", ")) * 5 if skills != "Not Mentioned" else 0
-    exp_score = exp * 2 if exp else 0
-    return base + exp_score
-
+    exp_num = safe_exp_to_number(exp)
+    exp_score = exp_num * 2
+    return base + exp_score 
+    
 def get_rating(score):
     stars = min(5, score // 10)
     return "⭐" * stars
@@ -418,12 +419,9 @@ def process_resumes(uploaded_files):
         text = extract_text_from_pdf(file)
 
         name = extract_name(text)
-
-        # ✅ This if block is properly inside the for-loop
         if "linkedin" in name.lower() or "/" in name:
             name = "Not found"
 
-        # Everything else stays at the same level as name assignment
         email = extract_email(text)
         phone = extract_phone(text)
         edu = extract_education(text)
@@ -469,7 +467,6 @@ def process_resumes(uploaded_files):
         })
 
     return pd.DataFrame(rows)
-
 
 # -------------------- Upload Resumes --------------------
 uploaded_files = st.file_uploader("📤 Upload Resumes (PDF)", type=["pdf"], accept_multiple_files=True)
@@ -1203,6 +1200,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
 
 
