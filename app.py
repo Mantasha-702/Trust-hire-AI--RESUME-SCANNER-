@@ -115,43 +115,65 @@ st.markdown(f"""
         font-family: 'Segoe UI', sans-serif;
         color: white;
     }}
+
+    /* 🔹 Updated Login Container (Glow Effect + Dark Glass Look) */
     .login-container {{
         width: 100%;
-        max-width: 400px;
-        margin: 10vh auto;
-        padding: 40px;
-        background-color: rgba(0, 0, 0, 0.6);
-        border-radius: 12px;
+        max-width: 420px;
+        margin: 12vh auto;
+        padding: 45px;
+        background: rgba(15, 25, 45, 0.85);
+        border-radius: 18px;
         text-align: center;
+        border: 1px solid rgba(0, 170, 255, 0.3);
+        box-shadow: 0 0 25px rgba(0, 170, 255, 0.4);
+        backdrop-filter: blur(10px);
     }}
+
+    /* 🔹 Updated Title */
     .login-title {{
-        font-size: 36px;
-        font-weight: bold;
-        margin-bottom: 10px;
-        color: white;
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        background: linear-gradient(90deg, #ffffff, #4fc3f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }}
+
+    /* 🔹 Updated Tagline */
     .login-tagline {{
-        font-size: 16px;
-        color: #ccc;
-        margin-bottom: 30px;
+        font-size: 17px;
+        color: #b0c4de;
+        margin-bottom: 35px;
+        letter-spacing: 0.5px;
     }}
+
     .stTextInput input {{
-        background-color: #222;
+        background-color: #1e293b;
         color: white;
+        border-radius: 8px;
+        border: 1px solid rgba(79, 195, 247, 0.4);
     }}
+
     .stButton>button {{
         width: 100%;
-        padding: 10px;
-        border-radius: 10px;
-        background-color: #4B8BBE;
+        padding: 12px;
+        border-radius: 12px;
+        background: linear-gradient(90deg, #4fc3f7, #1e88e5);
         color: white;
         border: none;
         font-weight: bold;
         margin-top: 20px;
+        transition: 0.3s ease-in-out;
     }}
+
+    .stButton>button:hover {{
+        box-shadow: 0 0 15px rgba(79, 195, 247, 0.7);
+        transform: scale(1.02);
+    }}
+
     </style>
 """, unsafe_allow_html=True)
-
 
 # 👤 Modern Auth UI
 if not st.session_state.get("authenticated", False):
@@ -1218,6 +1240,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
 
 
