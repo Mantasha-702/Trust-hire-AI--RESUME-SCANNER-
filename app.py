@@ -116,60 +116,59 @@ st.markdown(f"""
         color: white;
     }}
 
-    /* 🔹 Updated Login Container (Glow Effect + Dark Glass Look) */
+    /* 🔹 Login Container – Dark AI Glass Card */
     .login-container {{
         width: 100%;
-        max-width: 420px;
-        margin: 12vh auto;
-        padding: 45px;
-        background: rgba(15, 25, 45, 0.85);
-        border-radius: 18px;
-        text-align: center;
-        border: 1px solid rgba(0, 170, 255, 0.3);
-        box-shadow: 0 0 25px rgba(0, 170, 255, 0.4);
-        backdrop-filter: blur(10px);
+        max-width: 460px;
+        margin: 10vh auto;
+        padding: 40px 45px;
+        background: rgba(10, 20, 40, 0.85);
+        border-radius: 14px;
+        text-align: left;
+        border: 1px solid rgba(0, 170, 255, 0.35);
+        box-shadow: 0 0 30px rgba(0, 140, 255, 0.35);
     }}
 
-    /* 🔹 Updated Title */
+    /* 🔹 Title – Clean White Like Reference */
     .login-title {{
-        font-size: 42px;
+        font-size: 40px;
         font-weight: 700;
-        margin-bottom: 8px;
-        background: linear-gradient(90deg, #ffffff, #4fc3f7);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        margin-bottom: 6px;
+        text-align: center;
+        color: #ffffff;
     }}
 
-    /* 🔹 Updated Tagline */
+    /* 🔹 Tagline – Soft Subtle Blue */
     .login-tagline {{
         font-size: 17px;
-        color: #b0c4de;
+        color: #cbd5e1;
         margin-bottom: 35px;
-        letter-spacing: 0.5px;
+        text-align: center;
     }}
 
+    /* 🔹 Input Fields */
     .stTextInput input {{
-        background-color: #1e293b;
+        background-color: #1a1f2e;
         color: white;
         border-radius: 8px;
-        border: 1px solid rgba(79, 195, 247, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 10px;
     }}
 
+    /* 🔹 Login Button – Flat Blue Like Image */
     .stButton>button {{
         width: 100%;
         padding: 12px;
-        border-radius: 12px;
-        background: linear-gradient(90deg, #4fc3f7, #1e88e5);
+        border-radius: 10px;
+        background: linear-gradient(90deg, #5a9bd6, #4a86c5);
         color: white;
         border: none;
-        font-weight: bold;
+        font-weight: 600;
         margin-top: 20px;
-        transition: 0.3s ease-in-out;
     }}
 
     .stButton>button:hover {{
-        box-shadow: 0 0 15px rgba(79, 195, 247, 0.7);
-        transform: scale(1.02);
+        box-shadow: 0 0 15px rgba(90, 155, 214, 0.6);
     }}
 
     </style>
@@ -1240,6 +1239,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
 
 
