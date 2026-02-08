@@ -116,47 +116,72 @@ st.markdown(f"""
         color: white;
     }}
 
-    /* 🔹 Login Container – Dark AI Glass Card */
-    .login-container {{
-        width: 100%;
-        max-width: 460px;
-        margin: 10vh auto;
-        padding: 40px 45px;
-        background: rgba(10, 20, 40, 0.85);
-        border-radius: 14px;
-        text-align: left;
-        border: 1px solid rgba(0, 170, 255, 0.35);
-        box-shadow: 0 0 30px rgba(0, 140, 255, 0.35);
+    /* 🔹 Center Wrapper Fix */
+    .main .block-container {{
+        max-width: 700px;
+        padding-top: 6rem;
+        padding-bottom: 2rem;
     }}
 
-    /* 🔹 Title – Clean White Like Reference */
+    /* 🔹 Login Container – Proper Card Like Image 2 */
+    .login-container {{
+        background: rgba(8, 20, 40, 0.85);
+        padding: 35px 40px;
+        border-radius: 16px;
+        border: 1px solid rgba(0, 170, 255, 0.4);
+        box-shadow: 0 0 35px rgba(0, 140, 255, 0.35);
+    }}
+
+    /* 🔹 Title */
     .login-title {{
-        font-size: 40px;
+        font-size: 42px;
         font-weight: 700;
-        margin-bottom: 6px;
         text-align: center;
+        margin-bottom: 8px;
         color: #ffffff;
     }}
 
-    /* 🔹 Tagline – Soft Subtle Blue */
+    /* 🔹 Tagline */
     .login-tagline {{
         font-size: 17px;
-        color: #cbd5e1;
-        margin-bottom: 35px;
         text-align: center;
+        margin-bottom: 30px;
+        color: #cbd5e1;
     }}
 
-    /* 🔹 Input Fields */
-    .stTextInput input {{
-        background-color: #1a1f2e;
+    /* 🔹 Tabs Styling (Login / Register / Forgot Password) */
+    .stTabs [data-baseweb="tab-list"] {{
+        gap: 25px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }}
+
+    .stTabs [data-baseweb="tab"] {{
+        font-weight: 500;
+        color: #cbd5e1;
+    }}
+
+    .stTabs [aria-selected="true"] {{
+        color: #ffffff !important;
+        border-bottom: 3px solid #ff7a45 !important;
+    }}
+
+    /* 🔹 Input Fields – Proper Width Inside Card */
+    .stTextInput > div > div > input {{
+        background-color: #1c2233;
         color: white;
         border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 10px;
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 12px;
     }}
 
-    /* 🔹 Login Button – Flat Blue Like Image */
-    .stButton>button {{
+    /* 🔹 Password Eye Background Fix */
+    .stTextInput div[data-baseweb="input"] {{
+        background-color: #1c2233;
+        border-radius: 8px;
+    }}
+
+    /* 🔹 Login Button */
+    .stButton > button {{
         width: 100%;
         padding: 12px;
         border-radius: 10px;
@@ -167,7 +192,7 @@ st.markdown(f"""
         margin-top: 20px;
     }}
 
-    .stButton>button:hover {{
+    .stButton > button:hover {{
         box-shadow: 0 0 15px rgba(90, 155, 214, 0.6);
     }}
 
@@ -1239,6 +1264,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
 
 
