@@ -622,8 +622,11 @@ else:
     st.warning("⚠️ No matching future skills found. Try updating role extraction or adding more skills to resume.")
 
     # -------------------- Email Section --------------------
-EMAIL_SENDER = "mantashashaikh702@gmail.com"
-EMAIL_PASSWORD = "eszmojolqbxpcqhs"   # no spaces
+
+
+EMAIL_SENDER = os.getenv("EMAIL_SENDER")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+  # no spaces
 
 def generate_email_html(name, role, date, time):
     return f"""
@@ -1253,4 +1256,5 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
