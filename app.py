@@ -29,6 +29,7 @@ import random, string
 import requests
 import plotly.graph_objects as go
 from fpdf import FPDF
+import os
 
 for key in ["df", "filtered", "chat_history", "voice_text"]:
     if key not in st.session_state:
@@ -1256,5 +1257,6 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
 
