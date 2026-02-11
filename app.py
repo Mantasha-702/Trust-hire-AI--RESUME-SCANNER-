@@ -228,29 +228,29 @@ def extract_text_from_pdf(file):
     return text
 
 def extract_name(text):
-    text = re.sub(r'\s+', ' ', text).strip()
-    words = text.split()
-
-    first_part = " ".join(words[:8])
-
-    match = re.search(r"\b[A-Z][a-z]+(?:\s[A-Z][a-z]+){1,2}\b", first_part)
+    # 🔹 Try regex pattern first
+    match = re.search(r"\b[A-Z][a-z]+ [A-Z][a-z]+\b", text)
 
     if match:
         name = match.group(0)
         blacklist = ["Resume", "Curriculum", "Vitae", "Email", "Phone"]
+
         if any(b.lower() in name.lower() for b in blacklist):
             return "Not found"
+
         return name
 
-    return "Not found"
+    # 🔹 If regex fails, try checking first few lines
+    lines = text.split("\n")
 
+    for line in lines[:10]:
+        line = line.strip()
 
-
-        # ✅ clean name format
         if re.match(r"^[A-Z][a-z]+ [A-Z][a-z]+$", line):
             return line
 
     return "Not found"
+
 
 
 def extract_email(text):
@@ -1299,6 +1299,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
 
 
