@@ -622,8 +622,8 @@ else:
     st.warning("⚠️ No matching future skills found. Try updating role extraction or adding more skills to resume.")
 
     # -------------------- Email Section --------------------
-EMAIL_SENDER = "your_email@gmail.com"
-EMAIL_PASSWORD = "your_app_password"  # use your Gmail App Password
+EMAIL_SENDER = "mantashashaikh702@gmail.com"
+EMAIL_PASSWORD = "eszmojolqbxpcqhs"   # no spaces
 
 def generate_email_html(name, role, date, time):
     return f"""
@@ -678,19 +678,54 @@ email_body_template = st.text_area(
 )
 
 if st.button("📤 Send Emails"):
-    if selected_names:
-        for name in selected_names:
-            row = data_source[data_source["Name"] == name].iloc[0]
-            email = row["Email"]
-            body = email_body_template.format(name=name, date=interview_date, time=interview_time)
-            try:
-                yag.send(email, email_subject, body)
-                st.success(f"Email sent to {name} ({email})")
-            except Exception as e:
-                st.error(f"Failed to send email to {name} ({email}): {e}")
-    else:
+    if not selected_names:
         st.warning("⚠️ Please select at least one candidate.")
+        st.stop()
 
+    # 🔐 Initialize email server
+    try:
+        yag = yagmail.SMTP(
+            user=EMAIL_SENDER,
+            password=EMAIL_PASSWORD
+        )
+    except Exception as e:
+        st.error("❌ Failed to connect to Gmail. Check your App Password.")
+        st.stop()
+
+    success_count = 0
+
+    for name in selected_names:
+        row = data_source[data_source["Name"] == name]
+
+        if row.empty:
+            continue
+
+        email = row.iloc[0]["Email"]
+        role = row.iloc[0]["Job Role"]
+
+        # 🚫 Skip invalid emails
+        if not email or email == "Not found" or "@" not in email:
+            st.warning(f"⚠️ Invalid email for {name}. Skipping.")
+            continue
+
+        body = email_body_template.format(
+            name=name,
+            date=interview_date.strftime("%d-%m-%Y"),
+            time=interview_time.strftime("%I:%M %p")
+        )
+
+        try:
+            yag.send(
+                to=email,
+                subject=email_subject,
+                contents=body
+            )
+            success_count += 1
+            st.success(f"✅ Email sent to {name}")
+        except Exception as e:
+            st.error(f"❌ Failed for {name}: {e}")
+
+    st.info(f"📊 {success_count} emails sent successfully.")
 
 
 # 👁️ Resume Viewer
@@ -1218,3 +1253,4 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
