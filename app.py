@@ -228,20 +228,23 @@ def extract_text_from_pdf(file):
     return text
 
 def extract_name(text):
-    lines = text.split("\n")
+    text = re.sub(r'\s+', ' ', text).strip()
+    words = text.split()
 
-    for line in lines[:10]:  # top part of resume
-        line = line.strip()
+    first_part = " ".join(words[:8])
 
-        if (
-            "linkedin" in line.lower()
-            or "http" in line.lower()
-            or "www" in line.lower()
-            or ".com" in line.lower()
-            or "@" in line
-            or len(line.split()) > 4
-        ):
-            continue
+    match = re.search(r"\b[A-Z][a-z]+(?:\s[A-Z][a-z]+){1,2}\b", first_part)
+
+    if match:
+        name = match.group(0)
+        blacklist = ["Resume", "Curriculum", "Vitae", "Email", "Phone"]
+        if any(b.lower() in name.lower() for b in blacklist):
+            return "Not found"
+        return name
+
+    return "Not found"
+
+
 
         # ✅ clean name format
         if re.match(r"^[A-Z][a-z]+ [A-Z][a-z]+$", line):
@@ -251,54 +254,70 @@ def extract_name(text):
 
 
 def extract_email(text):
-    match = re.search(r"[\w\.-]+@[\w\.-]+", text)
-    return match.group(0) if match else "Not found"
+    match = re.search(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", text)
+    return match.group(0) if match else "Not Mentioned"
+
 
 def extract_phone(text):
-    match = re.search(r"\+?\d[\d\s\-()]{8,15}", text)
-    return match.group(0) if match else "Not found"
+    match = re.search(r"(\+91[\-\s]?)?[6-9]\d{9}", text)
+    return match.group(0) if match else "Not Mentioned"
+
 
 def extract_education(text):
-    keywords = ["B.Tech", "B.E", "MCA", "BSc", "M.Tech", "BCA", "M.Sc", "PhD", "Bachelor", "Master", "Diploma"]
-    found = [kw for kw in keywords if re.search(rf"\b{re.escape(kw)}\b", text, re.IGNORECASE)]
+    patterns = [
+        r"b\.?tech",
+        r"b\.?e",
+        r"bachelor",
+        r"m\.?tech",
+        r"mca",
+        r"bca",
+        r"m\.?sc",
+        r"b\.?sc",
+        r"phd",
+        r"diploma"
+    ]
+
+    found = []
+    for pattern in patterns:
+        if re.search(pattern, text, re.IGNORECASE):
+            found.append(pattern.replace("\\.?", "").upper())
+
     return ", ".join(set(found)) if found else "Not Mentioned"
 
 def extract_skills(text):
-    keywords = ["Python", "Java", "C++", "Django", "Flask", "Pandas", "NumPy", "SQL", "HTML", "CSS", "JavaScript", "Git"]
-    found = [kw for kw in keywords if re.search(rf"\b{re.escape(kw)}\b", text, re.IGNORECASE)]
+    keywords = [
+        "Python", "Java", "C++", "Django", "Flask", "Pandas",
+        "NumPy", "SQL", "HTML", "CSS", "JavaScript", "Git",
+        "Machine Learning", "Deep Learning", "TensorFlow",
+        "React", "Node.js", "MongoDB", "AWS", "Docker"
+    ]
+
+    found = []
+    for skill in keywords:
+        if re.search(rf"\b{re.escape(skill)}\b", text, re.IGNORECASE):
+            found.append(skill)
+
     return ", ".join(found) if found else "Not Mentioned"
+
 
 def extract_experience(text):
     text_lower = text.lower()
 
-    # 🎓 Fresher detection
-    fresher_keywords = ["fresher", "entry level", "recent graduate", "no experience"]
-    if any(k in text_lower for k in fresher_keywords):
+    if "fresher" in text_lower:
         return {"type": "fresher", "value": "Fresher"}
 
-    # 🧑‍💼 Internship detection
-    internship_match = re.search(
-        r"(\d{1,2})\s*(months|month|mos|mo).*?(internship|intern)",
-        text_lower
-    )
-    if internship_match:
-        months = internship_match.group(1)
-        return {
-            "type": "internship",
-            "value": f"{months} months internship experience"
-        }
-
-    # 💼 Full-time experience
-    year_match = re.search(r"(\d{1,2})\+?\s*(years|year|yrs|yr)", text_lower)
+    year_match = re.search(r"(\d+)\+?\s*(year|years|yr|yrs)", text_lower)
     if year_match:
         years = int(year_match.group(1))
-        return {
-            "type": "fulltime",
-            "value": f"{years} years"
-        }
+        return {"type": "fulltime", "value": f"{years} years"}
 
-    # ❌ Nothing mentioned → Fresher
+    month_match = re.search(r"(\d+)\s*(month|months)", text_lower)
+    if month_match:
+        months = int(month_match.group(1))
+        return {"type": "internship", "value": f"{months} months"}
+
     return {"type": "fresher", "value": "Fresher"}
+
 
 def classify_experience(exp_obj):
     if exp_obj["type"] == "fresher":
@@ -436,6 +455,9 @@ def process_resumes(uploaded_files):
 
     for file in uploaded_files:
         text = extract_text_from_pdf(file)
+        text = re.sub(r'\s+', ' ', text)
+        text = text.replace('\n', ' ')
+        text = text.strip()
 
         name = extract_name(text)
         if "linkedin" in name.lower() or "/" in name:
@@ -1037,38 +1059,58 @@ if question and question != st.session_state.get('last_processed_question', ''):
             answer = show(df[df["Education"].str.contains("computer science", case=False)], 
                         ["Name", "Education"])
 
-        # Experience
+               # Experience
         elif "more than 5" in q:
-            answer = show(df[df["Exp Level"] == "5+ years"], 
-                        ["Name", "Experience"])
+            answer = show(df[df["Experience Level"] == "5+ years"], 
+                      ["Name", "Experience"])
+
         elif "0-1 year" in q:
-            answer = show(df[df["Exp Level"] == "0-1 year"], 
-                        ["Name", "Experience"])
+            answer = show(df[df["Experience Level"] == "0–1 year"], 
+                      ["Name", "Experience"])
+
         elif "3-5 years" in q:
-            answer = show(df[df["Exp Level"] == "3-5 years"], 
-                        ["Name", "Experience"])
+            answer = show(df[df["Experience Level"] == "3–5 years"], 
+                      ["Name", "Experience"])
+
+        elif "1-3 years" in q:
+            answer = show(df[df["Experience Level"] == "1–3 years"], 
+                      ["Name", "Experience"])
+
         elif "unspecified experience" in q:
-            answer = show(df[df["Exp Level"] == "Unspecified"], 
-                        ["Name", "Experience"])
+            answer = show(df[df["Experience Level"] == "Unspecified"], 
+                      ["Name", "Experience"])
+
         elif "2 years experience" in q:
-            answer = show(df[df["Experience"].str.contains("2", case=False)], 
-                        ["Name", "Experience"])
+            answer = show(df[df["Experience"].str.contains("2", case=False, na=False)], 
+                      ["Name", "Experience"])
+    
         elif "less than 3" in q:
-            answer = show(df[df["Exp Level"].isin(["0-1 year", "1-3 years"])], 
-                        ["Name", "Experience"])
+            answer = show(df[df["Experience Level"].isin(["0–1 year", "1–3 years"])], 
+                      ["Name", "Experience"])
+
         elif "most experienced" in q:
-            df["Years"] = df["Experience"].str.extract(r'(\d+)').astype(float)
+            df["Years"] = df["Experience"].str.extract(r'(\d+)')
+            df["Years"] = pd.to_numeric(df["Years"], errors="coerce").fillna(0)
             top_exp = df.sort_values(by="Years", ascending=False).head(3)
             answer = show(top_exp, ["Name", "Experience"])
+
         elif "experience and python" in q:
-            answer = show(df[df["Experience"].str.contains("year", case=False) & 
-                             df["Skills"].str.contains("python", case=False)], 
-                        ["Name", "Experience", "Skills"])
+            answer = show(
+                df[
+                df["Experience"].str.contains("year", case=False, na=False) &
+                df["Skills"].str.contains("python", case=False, na=False)
+                ],
+                ["Name", "Experience", "Skills"]
+    )
+
         elif "how many resumes mention experience" in q:
             answer = str(df[df["Experience"] != "Not Mentioned"].shape[0])
+
         elif "invalid experience" in q:
-            answer = show(df[df["Experience"].str.contains("fake|invalid", case=False)], 
-                        ["Name", "Experience"])
+            answer = show(
+                df[df["Experience"].str.contains("fake|invalid", case=False, na=False)],
+                ["Name", "Experience"]
+    )
 
         # Job Role and Location
         elif "software engineer" in q:
@@ -1204,7 +1246,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
     name = top["Name"]
     skills = top["Skills"]
     edu = top["Education"]
-    exp = top.get("Experience Level", "Unspecified")
+    exp = top["Experience"]
     loc = top["Location"]
     salary = top["Expected Salary"]
     score = top["Interview Score"]
@@ -1257,6 +1299,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
 
 
