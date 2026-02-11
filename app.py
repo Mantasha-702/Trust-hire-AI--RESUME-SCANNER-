@@ -115,89 +115,43 @@ st.markdown(f"""
         font-family: 'Segoe UI', sans-serif;
         color: white;
     }}
-
-    /* 🔹 Center Wrapper Fix */
-    .main .block-container {{
-        max-width: 700px;
-        padding-top: 6rem;
-        padding-bottom: 2rem;
-    }}
-
-    /* 🔹 Login Container – Proper Card Like Image 2 */
     .login-container {{
-        background: rgba(8, 20, 40, 0.85);
-        padding: 35px 40px;
-        border-radius: 16px;
-        border: 1px solid rgba(0, 170, 255, 0.4);
-        box-shadow: 0 0 35px rgba(0, 140, 255, 0.35);
-    }}
-
-    /* 🔹 Title */
-    .login-title {{
-        font-size: 42px;
-        font-weight: 700;
-        text-align: center;
-        margin-bottom: 8px;
-        color: #ffffff;
-    }}
-
-    /* 🔹 Tagline */
-    .login-tagline {{
-        font-size: 17px;
-        text-align: center;
-        margin-bottom: 30px;
-        color: #cbd5e1;
-    }}
-
-    /* 🔹 Tabs Styling (Login / Register / Forgot Password) */
-    .stTabs [data-baseweb="tab-list"] {{
-        gap: 25px;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-    }}
-
-    .stTabs [data-baseweb="tab"] {{
-        font-weight: 500;
-        color: #cbd5e1;
-    }}
-
-    .stTabs [aria-selected="true"] {{
-        color: #ffffff !important;
-        border-bottom: 3px solid #ff7a45 !important;
-    }}
-
-    /* 🔹 Input Fields – Proper Width Inside Card */
-    .stTextInput > div > div > input {{
-        background-color: #1c2233;
-        color: white;
-        border-radius: 8px;
-        border: 1px solid rgba(255,255,255,0.1);
-        padding: 12px;
-    }}
-
-    /* 🔹 Password Eye Background Fix */
-    .stTextInput div[data-baseweb="input"] {{
-        background-color: #1c2233;
-        border-radius: 8px;
-    }}
-
-    /* 🔹 Login Button */
-    .stButton > button {{
         width: 100%;
-        padding: 12px;
+        max-width: 400px;
+        margin: 10vh auto;
+        padding: 40px;
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 12px;
+        text-align: center;
+    }}
+    .login-title {{
+        font-size: 36px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: white;
+    }}
+    .login-tagline {{
+        font-size: 16px;
+        color: #ccc;
+        margin-bottom: 30px;
+    }}
+    .stTextInput input {{
+        background-color: #222;
+        color: white;
+    }}
+    .stButton>button {{
+        width: 100%;
+        padding: 10px;
         border-radius: 10px;
-        background: linear-gradient(90deg, #5a9bd6, #4a86c5);
+        background-color: #4B8BBE;
         color: white;
         border: none;
-        font-weight: 600;
+        font-weight: bold;
         margin-top: 20px;
     }}
-
-    .stButton > button:hover {{
-        box-shadow: 0 0 15px rgba(90, 155, 214, 0.6);
-    }}
-
     </style>
 """, unsafe_allow_html=True)
+
 
 # 👤 Modern Auth UI
 if not st.session_state.get("authenticated", False):
@@ -1264,11 +1218,3 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
-
-
-
-
-
-
-
-
