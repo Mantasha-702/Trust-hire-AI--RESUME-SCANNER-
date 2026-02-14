@@ -33,12 +33,7 @@ import os
 
 # 🌈 Page Setup (MUST be first Streamlit command)
 st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
-import streamlit as st
 
-st.set_page_config(
-    page_title="TrustHire",
-    layout="wide"
-)
 
 # 🔥 ADD CSS HERE (Immediately After Page Config)
 st.markdown("""
@@ -1474,6 +1469,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
 
 
