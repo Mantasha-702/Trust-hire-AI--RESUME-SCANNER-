@@ -99,7 +99,7 @@ def get_base64_image(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 
-bg_base64 = get_base64_image("background_image.jpg")  # Make sure the file exists in same folder
+bg_base64 = get_base64_image("background_image.jpeg")  # Make sure the file exists in same folder
 
 
 # 🌐 Translator
@@ -1345,6 +1345,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
 
 
