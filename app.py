@@ -33,6 +33,52 @@ import os
 
 # 🌈 Page Setup (MUST be first Streamlit command)
 st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
+import streamlit as st
+
+st.set_page_config(
+    page_title="TrustHire",
+    layout="wide"
+)
+
+# 🔥 ADD CSS HERE (Immediately After Page Config)
+st.markdown("""
+<style>
+
+/* Main background */
+.main {
+    background-color: #ffffff;
+}
+
+/* Make all text black */
+html, body, [class*="css"] {
+    color: #000000;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+    color: #000000;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: #f8f9fa;
+}
+
+section[data-testid="stSidebar"] * {
+    color: #000000;
+}
+
+/* Buttons */
+div.stButton > button {
+    background-color: #1f77ff;
+    color: white;
+    border-radius: 8px;
+    height: 40px;
+    font-weight: 600;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 
 for key in ["df", "filtered", "chat_history", "voice_text"]:
@@ -1428,6 +1474,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
 
 
