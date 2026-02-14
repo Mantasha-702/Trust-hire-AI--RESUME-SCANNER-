@@ -31,46 +31,70 @@ import plotly.graph_objects as go
 from fpdf import FPDF
 import os
 
+# 🌈 Page Setup (MUST be first Streamlit command)
+st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
+
+
 for key in ["df", "filtered", "chat_history", "voice_text"]:
     if key not in st.session_state:
         st.session_state[key] = pd.DataFrame() if key in ["df", "filtered"] else []
 
 
 # --- USER AUTHENTICATION DATABASE ---
-conn = sqlite3.connect("users.db")
-c = conn.cursor()
-c.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        email TEXT PRIMARY KEY,
-        password TEXT NOT NULL
-    )
-""")
-conn.commit()
+def get_connection():
+    return sqlite3.connect("users.db", check_same_thread=False)
+
+def create_table():
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            email TEXT PRIMARY KEY,
+            password TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+create_table()
 
 def register_user(email, password):
+    conn = get_connection()
+    c = conn.cursor()
     hashed_pw = bcrypt.hash(password)
+
     try:
         c.execute("INSERT INTO users (email, password) VALUES (?, ?)", (email, hashed_pw))
         conn.commit()
+        conn.close()
         return True
-    except:
-        return False  # agar email already exist hai
+    except sqlite3.IntegrityError:
+        conn.close()
+        return False
 
 def login_user(email, password):
+    conn = get_connection()
+    c = conn.cursor()
     c.execute("SELECT password FROM users WHERE email=?", (email,))
     row = c.fetchone()
+    conn.close()
+
     if row and bcrypt.verify(password, row[0]):
         return True
     return False
 
 def reset_password(email, new_password):
+    conn = get_connection()
+    c = conn.cursor()
     hashed_pw = bcrypt.hash(new_password)
+
     c.execute("UPDATE users SET password=? WHERE email=?", (hashed_pw, email))
     conn.commit()
+    conn.close()
+
 
 def generate_code(length=8):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
-
 
 # --- Initialize Session State Variables ---
 if "authenticated" not in st.session_state:
@@ -85,10 +109,12 @@ if "last_processed_question" not in st.session_state:
     st.session_state.last_processed_question = ""
 if "voice_text" not in st.session_state:
     st.session_state.voice_text = ""
+# ---- Navigation State ----
+if "page" not in st.session_state:
+    st.session_state.page = "Filter Resumes"
 
 
-# 🌈 Page Setup (MUST be first Streamlit command)
-st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
+
 
 # 📍 Path Configuration
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
@@ -247,10 +273,67 @@ if not st.session_state.get("authenticated", False):
 st.title("🎉 Welcome to TrustHire - AI Resume Scanner!")
 
 
-st.markdown("### 🔐 Session Control")
-if st.button("🚪 Logout"):
+# ---- Sidebar Navigation ----
+st.sidebar.title("🚀 TrustHire Dashboard")
+st.sidebar.markdown("---")
+
+if st.sidebar.button("1️⃣ Filter Resumes", use_container_width=True):
+    st.session_state.page = "Filter Resumes"
+
+if st.sidebar.button("2️⃣ Suggested Skills for the Future", use_container_width=True):
+    st.session_state.page = "Future Skills"
+
+if st.sidebar.button("3️⃣ Send Interview Emails", use_container_width=True):
+    st.session_state.page = "Emails"
+
+if st.sidebar.button("4️⃣ Enter Candidate Name to View Resume & Summary", use_container_width=True):
+    st.session_state.page = "Candidate View"
+
+if st.sidebar.button("5️⃣ Resume Ranking by Job Role Fit", use_container_width=True):
+    st.session_state.page = "Ranking"
+
+if st.sidebar.button("6️⃣ Resume Query Assistant", use_container_width=True):
+    st.session_state.page = "Chatbot"
+
+if st.sidebar.button("7️⃣ Voice Summary of Best Resume", use_container_width=True):
+    st.session_state.page = "Voice Summary"
+
+st.sidebar.markdown("---")
+
+if st.sidebar.button("🚪 Logout", use_container_width=True):
     st.session_state.authenticated = False
     st.rerun()
+# -----------------------------
+# Page Routing
+# -----------------------------
+
+if st.session_state.page == "Filter Resumes":
+    st.write("Filter resume section yaha aayega")
+
+elif st.session_state.page == "Future Skills":
+    st.header("📈 Suggested Skills for the Future")
+    st.write("Future skills section yaha aayega")
+
+elif st.session_state.page == "Emails":
+    st.header("📧 Send Interview Emails")
+    st.write("Email section yaha aayega")
+
+elif st.session_state.page == "Candidate View":
+    st.header("📄 Candidate Resume & Summary")
+    st.write("Candidate view section yaha aayega")
+
+elif st.session_state.page == "Ranking":
+    st.header("🏆 Resume Ranking by Job Role Fit")
+    st.write("Ranking section yaha aayega")
+
+elif st.session_state.page == "Chatbot":
+    st.header("🤖 Resume Query Assistant")
+    st.write("Chatbot section yaha aayega")
+
+elif st.session_state.page == "Voice Summary":
+    st.header("🎤 Voice Summary of Best Resume")
+    st.write("Voice summary section yaha aayega")
+
 
 
 def clean_columns(df):
@@ -1345,6 +1428,7 @@ if "df" in st.session_state and not st.session_state.df.empty:
         file_name=f"{name}_summary_{lang.lower()}.txt",
         use_container_width=True
     )
+
 
 
 
