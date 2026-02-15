@@ -582,7 +582,7 @@ def show_future_skills():
         </style>
     """, unsafe_allow_html=True)
 
-    # ---------- Display Cards ----------
+        # ---------- Display Cards ----------
     if future_suggestions:
 
         st.markdown("### 💡 Suggested Skills for the Future:")
@@ -622,9 +622,6 @@ def show_future_skills():
                 file_name=f"{candidate_name}_roadmap.pdf",
                 use_container_width=True
             )
-
-    else:
-        st.info("✅ Candidate already has most trending skills!")
 
     else:
         st.warning("⚠️ No matching future skills found. Try updating role extraction or adding more skills to resume.")
@@ -1620,6 +1617,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
