@@ -456,16 +456,19 @@ def show_filter_resumes():
 
     with colB:
 
-    # Create safe copy of dataframe
+    # Create safe copy
         safe_df = display_df.copy()
 
-    # Clean text columns to prevent UTF-8 errors
+    # Safe text cleaning without breaking encoding
         for col in safe_df.columns:
             if safe_df[col].dtype == "object":
-                safe_df[col] = (
-                    safe_df[col]
-                    .astype(str)
-                    .apply(lambda x: x.encode("utf-8", "ignore").decode("utf-8"))
+
+                safe_df[col] = safe_df[col].apply(
+                    lambda x: (
+                        str(x).encode("utf-8", "ignore").decode("utf-8")
+                        if pd.notna(x)
+                        else ""
+                    )
                 )
 
     # Replace invalid numeric values
@@ -473,7 +476,11 @@ def show_filter_resumes():
         safe_df = safe_df.fillna("")
 
     # Convert safely to JSON
-        json_data = safe_df.to_json(orient="records", indent=2)
+        json_data = safe_df.to_json(
+            orient="records",
+            indent=2,
+            force_ascii=False
+        )
 
         st.download_button(
             label="🧾 Download JSON",
@@ -578,7 +585,7 @@ def show_future_skills():
     {demand}% Demand in {matched_role or extracted_role}
 </p>
 
-<a href="https://www.coursera.org/search?query={skill}"
+<a href="https://www.coursera.org/search?query={skill.replace(' ', '+')}"
    target="_blank"
    style="display:inline-block;
           margin-top:12px;
@@ -1606,6 +1613,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
