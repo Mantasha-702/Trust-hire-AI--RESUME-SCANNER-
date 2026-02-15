@@ -542,7 +542,7 @@ def show_future_skills():
         st.write("Current Skills:", current_skills)
         st.write("Suggested Skills:", future_suggestions)
 
-    # ---------------- Display Suggestions ----------------
+        # ---------------- Display Suggestions ----------------
     if future_suggestions:
 
         st.markdown("### 💡 Suggested Skills for the Future:")
@@ -553,47 +553,49 @@ def show_future_skills():
 
             with cols[i % 2]:
 
-                st.markdown(f"""
-                <div style='padding:20px;
-                            background:#ffffff;
-                            border-radius:16px;
-                            box-shadow:0 4px 12px rgba(0,0,0,0.08);
-                            margin-bottom:20px;'>
+                card_html = f"""
+<div style="padding:20px;
+            background:#ffffff;
+            border-radius:16px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom:20px;">
 
-                    <h4 style='color:#1f2937; margin-bottom:12px;'>{skill}</h4>
+<h4 style="color:#1f2937; margin-bottom:12px;">{skill}</h4>
 
-                    <div style='background:#e5e7eb;
-                                border-radius:12px;
-                                height:20px;
-                                margin-top:8px;'>
+<div style="background:#e5e7eb;
+            border-radius:12px;
+            height:20px;
+            margin-top:8px;">
 
-                        <div style='width:{demand}%;
-                                    background:linear-gradient(90deg,#4B8BBE,#306998);
-                                    height:20px;
-                                    border-radius:12px;'>
-                        </div>
-                    </div>
+    <div style="width:{demand}%;
+                background:linear-gradient(90deg,#4B8BBE,#306998);
+                height:20px;
+                border-radius:12px;">
+    </div>
+</div>
 
-                    <p style='font-size:13px; margin-top:10px; color:#4b5563;'>
-                        {demand}% Demand in {matched_role or extracted_role}
-                    </p>
+<p style="font-size:13px; margin-top:10px; color:#4b5563;">
+    {demand}% Demand in {matched_role or extracted_role}
+</p>
 
-                    <a href='https://www.coursera.org/search?query={skill}'
-                       target='_blank'
-                       style='display:inline-block;
-                              margin-top:12px;
-                              background:linear-gradient(90deg,#4B8BBE,#306998);
-                              color:white;
-                              text-decoration:none;
-                              padding:8px 16px;
-                              border-radius:8px;
-                              font-size:14px;
-                              font-weight:500;'>
-                        🚀 Learn on Coursera
-                    </a>
+<a href="https://www.coursera.org/search?query={skill}"
+   target="_blank"
+   style="display:inline-block;
+          margin-top:12px;
+          background:linear-gradient(90deg,#4B8BBE,#306998);
+          color:white;
+          text-decoration:none;
+          padding:8px 16px;
+          border-radius:8px;
+          font-size:14px;
+          font-weight:500;">
+    🚀 Learn on Coursera
+</a>
 
-                </div>
-                """, unsafe_allow_html=True)
+</div>
+"""
+
+                st.markdown(card_html, unsafe_allow_html=True)
 
         # ---------------- PDF Download ----------------
         pdf_path = generate_pdf(
@@ -1604,6 +1606,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
