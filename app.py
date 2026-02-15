@@ -493,11 +493,12 @@ def show_filter_resumes():
 
   
 # ---------------- Future Skill Prediction ----------------
+# ---------------- Future Skill Prediction ----------------
 def show_future_skills():
 
     st.markdown("## 📈 Future Skills Predictor")
 
-    # Safe source
+    # ---------- Data Source ----------
     data_source = st.session_state.get("filtered")
 
     if data_source is None or data_source.empty:
@@ -505,80 +506,109 @@ def show_future_skills():
 
     if data_source is None or data_source.empty:
         st.warning("⚠️ Please upload and process resumes first.")
-        st.stop()
+        return
 
-    # Candidate Selection
+    # ---------- Candidate Selection ----------
     selected_name = st.selectbox(
         "🔍 Select Candidate for Future Skills Prediction",
-        data_source["Name"],
-        key="future_skills_selectbox"
+        data_source["Name"].unique()
     )
 
     selected_row = data_source[data_source["Name"] == selected_name].iloc[0]
     candidate_name = selected_row["Name"]
-    candidate_role_text = selected_row["Job Role"]
+    candidate_role_text = selected_row.get("Job Role", "Software Engineer")
 
-    # Extract role & trending skills
+    # ---------- Extract Role ----------
     extracted_role, role_confidence = extract_role(candidate_role_text)
     trending_skills, matched_role, match_confidence = fetch_trending_skills_from_api(extracted_role)
 
-    # Current & future skills
-    current_skills = []
+    if not trending_skills:
+        st.warning("⚠️ No trending skills available for this role.")
+        return
 
-    if pd.notna(selected_row["Skills"]) and selected_row["Skills"] != "Not Mentioned":
+    # ---------- Current Skills ----------
+    current_skills = []
+    if pd.notna(selected_row.get("Skills")) and selected_row["Skills"] != "Not Mentioned":
         current_skills = [
             s.strip().lower()
             for s in str(selected_row["Skills"]).split(",")
         ]
 
+    # ---------- Future Suggestions ----------
     future_suggestions = {
         skill: demand
         for skill, demand in trending_skills.items()
         if skill.lower() not in current_skills
     }
 
-    # Debug mode
-    if st.checkbox("Show Debug Info", key="future_skills_debug"):
-        st.write("Detected Role:", extracted_role, f"(Confidence: {role_confidence}%)")
-        st.write("Matched Role:", matched_role, f"(Confidence: {match_confidence}%)")
+    # ---------- Debug ----------
+    if st.checkbox("Show Debug Info"):
+        st.write("Detected Role:", extracted_role)
+        st.write("Matched Role:", matched_role)
         st.write("Current Skills:", current_skills)
-        st.write("Suggested Skills:", future_suggestions)
+        st.write("Suggestions:", future_suggestions)
 
-    # If we have suggestions (cards + PDF)
+    # ---------- UI Styling ----------
+    st.markdown("""
+        <style>
+        .skill-card {
+            background: #0f172a;
+            padding: 25px;
+            border-radius: 18px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+            margin-bottom: 20px;
+        }
+        .skill-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 10px;
+        }
+        .demand-text {
+            color: #e2e8f0;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+        .learn-btn {
+            margin-top: 12px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # ---------- Display Cards ----------
     if future_suggestions:
 
         st.markdown("### 💡 Suggested Skills for the Future:")
+
         cols = st.columns(2)
 
         for i, (skill, demand) in enumerate(future_suggestions.items()):
-
             with cols[i % 2]:
 
                 st.markdown(f"""
-                <div style='padding:15px; background:rgba(255,255,255,0.05); border-radius:15px; 
-                box-shadow:0 3px 8px rgba(0,0,0,0.2); margin-bottom:15px;'>
-
-                    <h4 style='color:#4B8BBE;'>{skill}</h4>
-
-                    <div style='margin:8px 0;'>
-                        <div style='background:#dee2e6; border-radius:10px; height:20px;'>
-                            <div style='width:{demand}%; background:#4B8BBE; height:20px; border-radius:10px;'></div>
+                    <div class="skill-card">
+                        <div class="skill-title">{skill}</div>
+                        <div style="background:#334155; border-radius:10px; height:18px;">
+                            <div style="width:{demand}%; background:#3b82f6; height:18px; border-radius:10px;"></div>
                         </div>
-                        <p style='color:#ccc; font-size:12px; margin-top:4px;'>
+                        <div class="demand-text">
                             {demand}% Demand in {matched_role or extracted_role}
-                        </p>
+                        </div>
+                        <br>
+                        <a href="https://www.coursera.org/search?query={skill}" target="_blank">
+                            <button class="learn-btn">Learn More</button>
+                        </a>
                     </div>
-
-                    <a href='https://www.coursera.org/search?query={skill}' target='_blank'>
-                        <button style='background:#4B8BBE;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;'>
-                            Learn More
-                        </button>
-                    </a>
-
-                </div>
                 """, unsafe_allow_html=True)
 
-        # PDF Download
+        # ---------- PDF Generation ----------
         pdf_path = generate_pdf(
             candidate_name,
             matched_role or extracted_role,
@@ -589,8 +619,12 @@ def show_future_skills():
             st.download_button(
                 "📥 Download Personalized Roadmap PDF",
                 f,
-                file_name=f"{candidate_name}_roadmap.pdf"
+                file_name=f"{candidate_name}_roadmap.pdf",
+                use_container_width=True
             )
+
+    else:
+        st.info("✅ Candidate already has most trending skills!")
 
     else:
         st.warning("⚠️ No matching future skills found. Try updating role extraction or adding more skills to resume.")
@@ -1586,6 +1620,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
