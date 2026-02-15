@@ -455,13 +455,32 @@ def show_filter_resumes():
         )
 
     with colB:
-        json_data = display_df.to_json(orient="records", indent=2)
-        st.download_button(
-            "🧾 Download JSON",
-            data=json_data,
-            file_name="filtered_resumes.json",
-            mime="application/json"
-        )
+    # Create safe copy of dataframe
+    safe_df = display_df.copy()
+
+    # Clean text columns to prevent UTF-8 errors
+    for col in safe_df.columns:
+        if safe_df[col].dtype == "object":
+            safe_df[col] = (
+                safe_df[col]
+                .astype(str)
+                .apply(lambda x: x.encode("utf-8", "ignore").decode("utf-8"))
+            )
+
+    # Replace invalid numeric values
+    safe_df = safe_df.replace([np.inf, -np.inf], None)
+    safe_df = safe_df.fillna("")
+
+    # Convert safely to JSON
+    json_data = safe_df.to_json(orient="records", indent=2)
+
+    st.download_button(
+        label="🧾 Download JSON",
+        data=json_data,
+        file_name="filtered_resumes.json",
+        mime="application/json"
+    )
+
 #future skill prediction
 
 def show_future_skills():
@@ -836,31 +855,48 @@ def show_resume_ranking():
         st.progress(int(row["Match %"]))
 
 
-# -------------------- AI Resume Chatbot --------------------
+# -------------------- AI Resume Chatbot (Smart NLP Version) --------------------
 def show_chatbot():
 
-    st.header("🤖 Resume Chatbot")
+    import pandas as pd
+    import re
+    import numpy as np
 
-    # ✅ Initialize session state safely
+    st.header("🤖 Smart Resume AI Assistant")
+
+    # -------------------- Session State Init --------------------
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
     if "last_processed_question" not in st.session_state:
         st.session_state.last_processed_question = ""
 
-    if "last_question" not in st.session_state:
-        st.session_state.last_question = ""
-
-    # ✅ Ensure dataframe exists
+    # -------------------- Check Data --------------------
     if "df" not in st.session_state or st.session_state.df.empty:
         st.warning("Please upload resumes first.")
         return
 
-    df = st.session_state.df
+    df = st.session_state.df.copy()
+
+    # -------------------- Recommended Questions --------------------
+    st.markdown("### 💡 Try asking:")
+
+    sample_questions = [
+        "Who has the highest interview score?",
+        "Show candidates with Python and SQL skills",
+        "Who has more than 3 years experience?",
+        "Rank candidates by interview score",
+        "Show candidates from Mumbai"
+    ]
+
+    cols = st.columns(5)
+    for i, q in enumerate(sample_questions):
+        if cols[i].button(q):
+            st.session_state.chat_input = q
 
     # -------------------- Chat Input --------------------
     question = st.text_input(
-        "Type your question here and press Enter:",
+        "Ask anything about the uploaded resumes:",
         key="chat_input"
     )
 
@@ -868,230 +904,174 @@ def show_chatbot():
     if question and question != st.session_state.last_processed_question:
 
         st.session_state.last_processed_question = question
-
-        # Store user message
         st.session_state.chat_history.append(("You", question))
 
         try:
-
             q = question.lower().strip()
+            answer = ""
 
-            df = st.session_state.get("df")
+            # -------------------- Extract Numbers --------------------
+            numbers = list(map(int, re.findall(r"\d+", q)))
 
-            # Safety check
-            if df is None or df.empty:
-                answer = "Please upload resumes first."
+            # -------------------- Collect Skills Dynamically --------------------
+            all_skills = set()
+            if "Skills" in df.columns:
+                for skills in df["Skills"].dropna():
+                    for skill in str(skills).split(","):
+                        all_skills.add(skill.strip().lower())
 
-            else:
+            detected_skills = [skill for skill in all_skills if skill in q]
 
-                # -------------------- Collect all skills dynamically --------------------
-                all_skills = set()
+            # -------------------- Detect Location Dynamically --------------------
+            detected_locations = []
+            if "Location" in df.columns:
+                for loc in df["Location"].dropna().astype(str).unique():
+                    if loc.lower() in q:
+                        detected_locations.append(loc)
 
-                if "Skills" in df.columns:
-                    for skills in df["Skills"].dropna():
-                        skill_list = str(skills).split(",")
-                        for skill in skill_list:
-                            all_skills.add(skill.strip().lower())
+            # -------------------- Highest / Top --------------------
+            if any(word in q for word in ["highest", "top", "best", "maximum"]):
 
-                detected_skills = [skill for skill in all_skills if skill in q]
-
-                answer = ""
-
-                # -------------------- Skill Based Questions --------------------
-                detected_skills = [skill for skill in all_skills if skill in q]
-                answer = ""
-                filtered = pd.DataFrame()  # ✅ FIX — initialize safely
-
-# -------------------- Skill Based Questions --------------------
-                if detected_skills:
-
-                    pattern = "|".join(map(re.escape, detected_skills))
-
-                    filtered = df[df["Skills"].str.contains(pattern, case=False, na=False)]
-
-                    if not filtered.empty:
-                        answer = filtered[["Name", "Skills"]].to_string(index=False)
-                    else:
-                        answer = "No candidates found with that skill."
-
-
-
-                # -------------------- Best Candidate --------------------
-                elif "best candidate" in q or "top candidate" in q:
-
-                    if "Interview Score" in df.columns:
-                        top = df.sort_values("Interview Score", ascending=False).head(1)
-                        answer = top.to_string(index=False)
-                    else:
-                        answer = "Interview Score column not found."
-
-                # -------------------- Top 5 Candidates --------------------
-                elif "top 5" in q or "top five" in q:
-
-                    if "Interview Score" in df.columns:
-                        top5 = df.sort_values("Interview Score", ascending=False).head(5)
-                        answer = top5.to_string(index=False)
-                    else:
-                        answer = "Interview Score column not found."
-
-                # -------------------- Highest Score --------------------
-                elif "highest score" in q:
-
-                    if "Interview Score" in df.columns:
-                        highest = df[df["Interview Score"] == df["Interview Score"].max()]
-                        answer = highest.to_string(index=False)
-                    else:
-                        answer = "Interview Score column not found."
-
-                # -------------------- Lowest Score --------------------
-                elif "lowest score" in q:
-
-                    if "Interview Score" in df.columns:
-                        lowest = df[df["Interview Score"] == df["Interview Score"].min()]
-                        answer = lowest.to_string(index=False)
-                    else:
-                        answer = "Interview Score column not found."
-
-                # -------------------- Show Scores --------------------
-                elif "score" in q:
-
-                    if "Interview Score" in df.columns:
-                        answer = df[["Name", "Interview Score"]].to_string(index=False)
-                    else:
-                        answer = "Interview Score column not found."
-
-                # -------------------- Experience --------------------
-                elif "experience" in q:
-
-                    columns = ["Name"]
-
-                    if "Experience" in df.columns:
-                        columns.append("Experience")
-
-                    if "Experience Level" in df.columns:
-                        columns.append("Experience Level")
-
-                    answer = df[columns].to_string(index=False)
-
-                # -------------------- Education --------------------
-                elif "education" in q or "qualification" in q:
-
-                    if "Education" in df.columns:
-                        answer = df[["Name", "Education"]].to_string(index=False)
-                    else:
-                        answer = "Education column not found."
-
-                # -------------------- Location --------------------
-                elif "location" in q or "city" in q:
-
-                    if "Location" in df.columns:
-                        answer = df[["Name", "Location"]].to_string(index=False)
-                    else:
-                        answer = "Location column not found."
-
-                # -------------------- Email --------------------
-                elif "email" in q:
-
-                    if "Email" in df.columns:
-                        answer = df[["Name", "Email"]].to_string(index=False)
-                    else:
-                        answer = "Email column not found."
-
-                # -------------------- Phone --------------------
-                elif "phone" in q or "contact" in q:
-
-                    if "Phone" in df.columns:
-                        answer = df[["Name", "Phone"]].to_string(index=False)
-                    else:
-                        answer = "Phone column not found."
-
-                # -------------------- Summary --------------------
-                elif "summary" in q:
-
-                    if "Summary" in df.columns:
-                        answer = df[["Name", "Summary"]].to_string(index=False)
-                    else:
-                        answer = "Summary column not found."
-
-                # -------------------- Resume Text --------------------
-                elif "resume" in q or "full text" in q:
-
-                    if "Full Text" in df.columns:
-                        answer = df[["Name", "Full Text"]].head(3).to_string(index=False)
-                    else:
-                        answer = "Full Text column not found."
-
-                # -------------------- List Candidates --------------------
-                elif "list candidates" in q or "all candidates" in q:
-
-                    answer = df["Name"].to_string(index=False)
-
-                # -------------------- Total Candidates --------------------
-                elif "total candidates" in q or "how many" in q:
-
-                    answer = f"Total candidates: {len(df)}"
-
-                # -------------------- Average Score --------------------
-                elif "average score" in q:
-
-                    if "Interview Score" in df.columns:
-                        avg = df["Interview Score"].mean()
-                        answer = f"Average interview score is {avg:.2f}"
-                    else:
-                        answer = "Interview Score column not found."
-
-                # -------------------- Most Experience --------------------
-                elif "most experience" in q:
-
-                    if "Experience" in df.columns:
-                        most_exp = df.sort_values("Experience", ascending=False).head(1)
-                        answer = most_exp.to_string(index=False)
-                    else:
-                        answer = "Experience column not found."
-
-                # -------------------- Default Help --------------------
+                if "Interview Score" in df.columns:
+                    sorted_df = df.sort_values("Interview Score", ascending=False)
+                    answer = sorted_df.head(5).to_string(index=False)
                 else:
+                    answer = "Interview Score column not found."
 
-                    answer = (
-                        "I can help with:\n\n"
-                        "• Skills search\n"
-                        "• Best candidate\n"
-                        "• Top candidates\n"
-                        "• Interview scores\n"
-                        "• Experience\n"
-                        "• Education\n"
-                        "• Email and phone\n"
-                        "• Location\n"
-                        "• Resume summary\n"
-                        "• Total candidates\n"
-                    )
+            # -------------------- Lowest --------------------
+            elif any(word in q for word in ["lowest", "minimum", "worst"]):
+
+                if "Interview Score" in df.columns:
+                    sorted_df = df.sort_values("Interview Score")
+                    answer = sorted_df.head(5).to_string(index=False)
+                else:
+                    answer = "Interview Score column not found."
+
+            # -------------------- Ranking --------------------
+            elif "rank" in q or "sort" in q:
+
+                if "Interview Score" in df.columns:
+                    sorted_df = df.sort_values("Interview Score", ascending=False)
+                    answer = sorted_df.to_string(index=False)
+                else:
+                    answer = "Interview Score column not found."
+
+            # -------------------- Experience Comparison --------------------
+            elif "experience" in q:
+
+                if "Experience" not in df.columns:
+                    answer = "Experience column not found."
+
+                else:
+                    if "more than" in q or "greater than" in q:
+                        if numbers:
+                            filtered = df[df["Experience"] > numbers[0]]
+                            answer = filtered.to_string(index=False)
+                        else:
+                            answer = "Please specify years."
+
+                    elif "less than" in q:
+                        if numbers:
+                            filtered = df[df["Experience"] < numbers[0]]
+                            answer = filtered.to_string(index=False)
+                        else:
+                            answer = "Please specify years."
+
+                    elif "between" in q and len(numbers) >= 2:
+                        filtered = df[
+                            (df["Experience"] >= numbers[0]) &
+                            (df["Experience"] <= numbers[1])
+                        ]
+                        answer = filtered.to_string(index=False)
+
+                    else:
+                        answer = df[["Name", "Experience"]].to_string(index=False)
+
+            # -------------------- Skill Filtering --------------------
+            elif detected_skills:
+
+                pattern = "|".join(map(re.escape, detected_skills))
+                filtered = df[df["Skills"].str.contains(pattern, case=False, na=False)]
+
+                if not filtered.empty:
+                    answer = filtered.to_string(index=False)
+                else:
+                    answer = "No candidates found with that skill."
+
+            # -------------------- Location Filtering --------------------
+            elif detected_locations:
+
+                filtered = df[df["Location"].isin(detected_locations)]
+                answer = filtered.to_string(index=False)
+
+            # -------------------- Score Queries --------------------
+            elif "score" in q:
+
+                if "Interview Score" in df.columns:
+                    answer = df[["Name", "Interview Score"]].to_string(index=False)
+                else:
+                    answer = "Interview Score column not found."
+
+            # -------------------- Email / Contact --------------------
+            elif "email" in q or "contact" in q or "phone" in q:
+
+                columns = ["Name"]
+                for col in ["Email", "Phone"]:
+                    if col in df.columns:
+                        columns.append(col)
+
+                answer = df[columns].to_string(index=False)
+
+            # -------------------- Education --------------------
+            elif "education" in q or "qualification" in q:
+
+                if "Education" in df.columns:
+                    answer = df[["Name", "Education"]].to_string(index=False)
+                else:
+                    answer = "Education column not found."
+
+            # -------------------- Total Count --------------------
+            elif "total" in q or "how many" in q:
+
+                answer = f"Total candidates: {len(df)}"
+
+            # -------------------- Default --------------------
+            else:
+                answer = (
+                    "I can help with:\n"
+                    "• Skills filtering\n"
+                    "• Experience comparison\n"
+                    "• Ranking candidates\n"
+                    "• Interview scores\n"
+                    "• Location search\n"
+                    "• Contact details\n"
+                    "• Education\n"
+                    "• Candidate statistics\n"
+                )
 
         except Exception as e:
-
             answer = f"Error occurred: {str(e)}"
 
-        # Store bot reply
         st.session_state.chat_history.append(("Bot", answer))
 
-       
+    # -------------------- Display Chat (Recent First Below Input) --------------------
+    if st.session_state.chat_history:
 
-    # -------------------- Display Chat --------------------
-    for sender, message in st.session_state.chat_history:
+        st.markdown("### 💬 Chat History")
 
-        if sender == "You":
-            st.markdown(f"**🧑 You:** {message}")
-
-        else:
-            st.markdown("**🤖 Bot:**")
-            st.text(message)
+        for sender, message in reversed(st.session_state.chat_history):
+            if sender == "You":
+                st.markdown(f"**🧑 You:** {message}")
+            else:
+                st.markdown("**🤖 Bot:**")
+                st.text(message)
 
     # -------------------- Clear Chat --------------------
     if st.button("🧹 Clear Chat"):
-
         st.session_state.chat_history = []
         st.session_state.last_processed_question = ""
-
         st.rerun()
+
 
 # -------------------- Voice Summary Function --------------------
 def show_voice_summary():
@@ -1607,6 +1587,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
