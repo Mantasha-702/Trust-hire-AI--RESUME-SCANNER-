@@ -484,7 +484,10 @@ def show_filter_resumes():
 
 #future skill prediction
 
+# ---------------- Future Skill Prediction ----------------
 def show_future_skills():
+
+    import streamlit as st
 
     st.markdown("## 📈 Future Skills Predictor")
 
@@ -498,10 +501,17 @@ def show_future_skills():
         st.warning("⚠️ Please upload and process resumes first.")
         return
 
+    # ---------------- Required Columns Check ----------------
+    required_cols = ["Name", "Job Role", "Skills"]
+    for col in required_cols:
+        if col not in data_source.columns:
+            st.error(f"Missing required column: {col}")
+            return
+
     # ---------------- Candidate Selection ----------------
     selected_name = st.selectbox(
         "🔍 Select Candidate for Future Skills Prediction",
-        data_source["Name"].unique(),
+        data_source["Name"].dropna().unique(),
         key="future_skills_selectbox"
     )
 
@@ -515,7 +525,9 @@ def show_future_skills():
     trending_skills, matched_role, match_confidence = fetch_trending_skills_from_api(extracted_role)
 
     # ---------------- Skill Comparison ----------------
-    current_skills = [s.strip().lower() for s in selected_row["Skills"].split(",")]
+    current_skills = []
+    if pd.notna(selected_row["Skills"]):
+        current_skills = [s.strip().lower() for s in str(selected_row["Skills"]).split(",")]
 
     future_suggestions = {
         skill: demand
@@ -538,42 +550,46 @@ def show_future_skills():
         cols = st.columns(2)
 
         for i, (skill, demand) in enumerate(future_suggestions.items()):
+
             with cols[i % 2]:
+
                 st.markdown(f"""
-                <div style='padding:15px;
+                <div style='padding:20px;
                             background:#ffffff;
-                            border-radius:12px;
-                            box-shadow:0 2px 6px rgba(0,0,0,0.1);
-                            margin-bottom:15px;'>
+                            border-radius:16px;
+                            box-shadow:0 4px 12px rgba(0,0,0,0.08);
+                            margin-bottom:20px;'>
 
-                    <h4 style='color:#000;'>{skill}</h4>
+                    <h4 style='color:#1f2937; margin-bottom:12px;'>{skill}</h4>
 
-                    <div style='background:#e9ecef;
-                                border-radius:10px;
-                                height:18px;
+                    <div style='background:#e5e7eb;
+                                border-radius:12px;
+                                height:20px;
                                 margin-top:8px;'>
 
                         <div style='width:{demand}%;
-                                    background:#4B8BBE;
-                                    height:18px;
-                                    border-radius:10px;'>
+                                    background:linear-gradient(90deg,#4B8BBE,#306998);
+                                    height:20px;
+                                    border-radius:12px;'>
                         </div>
                     </div>
 
-                    <p style='font-size:12px; margin-top:6px; color:#555;'>
+                    <p style='font-size:13px; margin-top:10px; color:#4b5563;'>
                         {demand}% Demand in {matched_role or extracted_role}
                     </p>
 
                     <a href='https://www.coursera.org/search?query={skill}'
-                       target='_blank'>
-                        <button style='background:#4B8BBE;
-                                       color:white;
-                                       border:none;
-                                       padding:6px 12px;
-                                       border-radius:6px;
-                                       cursor:pointer;'>
-                            Learn More
-                        </button>
+                       target='_blank'
+                       style='display:inline-block;
+                              margin-top:12px;
+                              background:linear-gradient(90deg,#4B8BBE,#306998);
+                              color:white;
+                              text-decoration:none;
+                              padding:8px 16px;
+                              border-radius:8px;
+                              font-size:14px;
+                              font-weight:500;'>
+                        🚀 Learn on Coursera
                     </a>
 
                 </div>
@@ -1588,6 +1604,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
