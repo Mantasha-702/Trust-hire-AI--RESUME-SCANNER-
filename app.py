@@ -532,7 +532,6 @@ def show_future_skills():
 
     # ---------------- Role Extraction ----------------
     extracted_role, role_confidence = extract_role(candidate_role_text)
-
     trending_skills, matched_role, match_confidence = fetch_trending_skills_from_api(extracted_role)
 
     if not trending_skills:
@@ -553,18 +552,10 @@ def show_future_skills():
         if skill.lower() not in current_skills
     }
 
-    # ---------------- Debug Mode ----------------
-    if st.checkbox("Show Debug Info", key="future_skills_debug"):
-        st.write("Detected Role:", extracted_role, f"(Confidence: {role_confidence}%)")
-        st.write("Matched Role:", matched_role, f"(Confidence: {match_confidence}%)")
-        st.write("Current Skills:", current_skills)
-        st.write("Suggested Skills:", future_suggestions)
-
     # ---------------- Display Suggestions ----------------
     if future_suggestions:
 
         st.markdown("### 💡 Suggested Skills for the Future:")
-
         cols = st.columns(2)
 
         for i, (skill, demand) in enumerate(future_suggestions.items()):
@@ -573,16 +564,12 @@ def show_future_skills():
 
                 st.markdown(f"### {skill}")
 
-                # Convert demand safely to number
                 try:
                     demand_value = float(demand)
                 except:
                     demand_value = 0.0
 
-# Keep value between 0 and 100
                 demand_value = max(0, min(demand_value, 100))
-
-# Convert to 0–1 range for progress bar
                 safe_progress = demand_value / 100
 
                 st.progress(safe_progress)
@@ -591,23 +578,14 @@ def show_future_skills():
                     f"{int(demand_value)}% Demand in {matched_role or extracted_role}"
                 )
 
-
-                # Proper URL encoding (handles spaces & special chars safely)
                 encoded_skill = quote_plus(skill)
                 course_url = f"https://www.coursera.org/search?query={encoded_skill}"
 
-                st.link_button(
-                    label="🚀 Learn on Coursera",
-                    url=course_url
-                )
+                st.link_button("🚀 Learn on Coursera", course_url)
 
-    else:
-        st.success("🎉 Candidate already has all trending skills!")
-
-  
-        # ---------------- PDF Download ----------------
+        # ---------- PDF SECTION ----------
         pdf_path = generate_pdf(
-            candidate_name,
+            selected_name,
             matched_role or extracted_role,
             future_suggestions
         )
@@ -616,12 +594,11 @@ def show_future_skills():
             st.download_button(
                 "📥 Download Personalized Roadmap PDF",
                 f,
-                file_name=f"{candidate_name}_roadmap.pdf"
+                file_name=f"{selected_name}_roadmap.pdf"
             )
 
     else:
         st.warning("⚠️ No matching future skills found.")
-
 
 # -------------------- Email Section --------------------
 
@@ -1614,6 +1591,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
