@@ -455,31 +455,32 @@ def show_filter_resumes():
         )
 
     with colB:
+
     # Create safe copy of dataframe
-    safe_df = display_df.copy()
+        safe_df = display_df.copy()
 
     # Clean text columns to prevent UTF-8 errors
-    for col in safe_df.columns:
-        if safe_df[col].dtype == "object":
-            safe_df[col] = (
-                safe_df[col]
-                .astype(str)
-                .apply(lambda x: x.encode("utf-8", "ignore").decode("utf-8"))
-            )
+        for col in safe_df.columns:
+            if safe_df[col].dtype == "object":
+                safe_df[col] = (
+                    safe_df[col]
+                    .astype(str)
+                    .apply(lambda x: x.encode("utf-8", "ignore").decode("utf-8"))
+                )
 
     # Replace invalid numeric values
-    safe_df = safe_df.replace([np.inf, -np.inf], None)
-    safe_df = safe_df.fillna("")
+        safe_df = safe_df.replace([np.inf, -np.inf], None)
+        safe_df = safe_df.fillna("")
 
     # Convert safely to JSON
-    json_data = safe_df.to_json(orient="records", indent=2)
+        json_data = safe_df.to_json(orient="records", indent=2)
 
-    st.download_button(
-        label="🧾 Download JSON",
-        data=json_data,
-        file_name="filtered_resumes.json",
-        mime="application/json"
-    )
+        st.download_button(
+            label="🧾 Download JSON",
+            data=json_data,
+            file_name="filtered_resumes.json",
+            mime="application/json"
+        )
 
 #future skill prediction
 
@@ -1587,6 +1588,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
