@@ -39,42 +39,72 @@ st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
 st.markdown("""
 <style>
 
-/* Main background */
-.main {
-    background-color: #ffffff;
+/* App Background */
+.stApp {
+    background-color: #f4f6f9;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-/* Make all text black */
-html, body, [class*="css"] {
-    color: #000000;
+/* Center Main Content */
+.main .block-container {
+    max-width: 1100px;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    margin: auto;
 }
 
-/* Headings */
-h1, h2, h3, h4, h5, h6 {
-    color: #000000;
+/* Titles */
+h1 {
+    color: #1a1a1a;
+    text-align: center;
+    font-weight: 700;
+}
+
+h2, h3 {
+    color: #222222;
+    font-weight: 600;
+}
+
+/* All Normal Text */
+p, div, span, label {
+    color: #2c2c2c !important;
+    font-size: 15px;
+}
+
+/* Navigation Radio Buttons */
+div[role="radiogroup"] {
+    justify-content: center;
+}
+
+div[role="radiogroup"] label {
+    font-weight: 600 !important;
+    color: #1f2d3d !important;
 }
 
 /* Sidebar */
 section[data-testid="stSidebar"] {
-    background-color: #f8f9fa;
+    background-color: #e9ecef;
 }
 
 section[data-testid="stSidebar"] * {
-    color: #000000;
+    color: #1f2d3d !important;
 }
 
 /* Buttons */
-div.stButton > button {
-    background-color: #1f77ff;
+.stButton > button {
+    background-color: #4a86c5;
     color: white;
     border-radius: 8px;
-    height: 40px;
     font-weight: 600;
+    height: 40px;
+}
+
+.stButton > button:hover {
+    background-color: #356ca3;
 }
 
 </style>
 """, unsafe_allow_html=True)
-
 
 for key in ["df", "filtered", "chat_history", "voice_text"]:
     if key not in st.session_state:
@@ -1534,7 +1564,8 @@ def process_resumes(uploaded_files):
 
 # ✅ Authenticated - Actual App Logic Here
 st.title("🎉 Welcome to TrustHire - AI Resume Scanner!")
-st.markdown("### Navigation")
+st.markdown("<h3 style='text-align:center;'>Navigation</h3>", unsafe_allow_html=True)
+
 
 page = st.radio(
     "",
@@ -1576,5 +1607,6 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
