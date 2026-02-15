@@ -491,10 +491,9 @@ def show_filter_resumes():
 
 #future skill prediction
 
+  
 # ---------------- Future Skill Prediction ----------------
 def show_future_skills():
-
-    import streamlit as st
 
     st.markdown("## 📈 Future Skills Predictor")
 
@@ -516,25 +515,37 @@ def show_future_skills():
             return
 
     # ---------------- Candidate Selection ----------------
+    names = data_source["Name"].dropna().unique()
+
+    if len(names) == 0:
+        st.warning("No candidates available.")
+        return
+
     selected_name = st.selectbox(
         "🔍 Select Candidate for Future Skills Prediction",
-        data_source["Name"].dropna().unique(),
+        names,
         key="future_skills_selectbox"
     )
 
     selected_row = data_source[data_source["Name"] == selected_name].iloc[0]
-
-    candidate_name = selected_row["Name"]
     candidate_role_text = selected_row["Job Role"]
 
     # ---------------- Role Extraction ----------------
     extracted_role, role_confidence = extract_role(candidate_role_text)
+
     trending_skills, matched_role, match_confidence = fetch_trending_skills_from_api(extracted_role)
+
+    if not trending_skills:
+        st.warning("No trending skills data available.")
+        return
 
     # ---------------- Skill Comparison ----------------
     current_skills = []
     if pd.notna(selected_row["Skills"]):
-        current_skills = [s.strip().lower() for s in str(selected_row["Skills"]).split(",")]
+        current_skills = [
+            s.strip().lower()
+            for s in str(selected_row["Skills"]).split(",")
+        ]
 
     future_suggestions = {
         skill: demand
@@ -549,7 +560,7 @@ def show_future_skills():
         st.write("Current Skills:", current_skills)
         st.write("Suggested Skills:", future_suggestions)
 
-        # ---------------- Display Suggestions ----------------
+    # ---------------- Display Suggestions ----------------
     if future_suggestions:
 
         st.markdown("### 💡 Suggested Skills for the Future:")
@@ -560,50 +571,40 @@ def show_future_skills():
 
             with cols[i % 2]:
 
-                card_html = f"""
-<div style="padding:20px;
-            background:#ffffff;
-            border-radius:16px;
-            box-shadow:0 4px 12px rgba(0,0,0,0.08);
-            margin-bottom:20px;">
+                st.markdown(f"### {skill}")
 
-<h4 style="color:#1f2937; margin-bottom:12px;">{skill}</h4>
+                # Convert demand safely to number
+                try:
+                    demand_value = float(demand)
+                except:
+                    demand_value = 0.0
 
-<div style="background:#e5e7eb;
-            border-radius:12px;
-            height:20px;
-            margin-top:8px;">
+# Keep value between 0 and 100
+                demand_value = max(0, min(demand_value, 100))
 
-    <div style="width:{demand}%;
-                background:linear-gradient(90deg,#4B8BBE,#306998);
-                height:20px;
-                border-radius:12px;">
-    </div>
-</div>
+# Convert to 0–1 range for progress bar
+                safe_progress = demand_value / 100
 
-<p style="font-size:13px; margin-top:10px; color:#4b5563;">
-    {demand}% Demand in {matched_role or extracted_role}
-</p>
+                st.progress(safe_progress)
 
-<a href="https://www.coursera.org/search?query={skill.replace(' ', '+')}"
-   target="_blank"
-   style="display:inline-block;
-          margin-top:12px;
-          background:linear-gradient(90deg,#4B8BBE,#306998);
-          color:white;
-          text-decoration:none;
-          padding:8px 16px;
-          border-radius:8px;
-          font-size:14px;
-          font-weight:500;">
-    🚀 Learn on Coursera
-</a>
+                st.caption(
+                    f"{int(demand_value)}% Demand in {matched_role or extracted_role}"
+                )
 
-</div>
-"""
 
-                st.markdown(card_html, unsafe_allow_html=True)
+                # Proper URL encoding (handles spaces & special chars safely)
+                encoded_skill = quote_plus(skill)
+                course_url = f"https://www.coursera.org/search?query={encoded_skill}"
 
+                st.link_button(
+                    label="🚀 Learn on Coursera",
+                    url=course_url
+                )
+
+    else:
+        st.success("🎉 Candidate already has all trending skills!")
+
+  
         # ---------------- PDF Download ----------------
         pdf_path = generate_pdf(
             candidate_name,
@@ -1613,6 +1614,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
