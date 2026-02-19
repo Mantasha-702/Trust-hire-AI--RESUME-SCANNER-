@@ -342,94 +342,47 @@ def show_dashboard():
     if "Name" not in df.columns:
         df["Name"] = "Candidate"
 
-    # Ensure numeric scores
-    df["Interview Score"] = pd.to_numeric(df["Interview Score"], errors="coerce").fillna(0)
+    df["Interview Score"] = pd.to_numeric(
+        df["Interview Score"],
+        errors="coerce"
+    ).fillna(0)
 
     # ------------------------------
-    # CALCULATIONS
+    # KPI CALCULATIONS
     # ------------------------------
     total_candidates = len(df)
     avg_score = round(df["Interview Score"].mean(), 1)
     shortlisted = len(df[df["Interview Score"] >= 70])
 
     try:
-        top_candidate = df.loc[df["Interview Score"].idxmax()]["Name"]
+        top_candidate = df.loc[
+            df["Interview Score"].idxmax()
+        ]["Name"]
     except:
         top_candidate = "N/A"
 
     # ------------------------------
-    # 🎨 ANIMATED KPI CARDS
+    # KPI CARDS
     # ------------------------------
-    st.markdown("""
-        <style>
-        .kpi-card {
-            background: linear-gradient(135deg, #1f1f1f, #2c2c2c);
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            color: white;
-            box-shadow: 0px 4px 15px rgba(0,0,0,0.4);
-            transition: transform 0.3s ease;
-        }
-        .kpi-card:hover {
-            transform: scale(1.05);
-        }
-        .kpi-number {
-            font-size: 30px;
-            font-weight: bold;
-        }
-        .kpi-title {
-            font-size: 15px;
-            opacity: 0.8;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
     col1, col2, col3, col4 = st.columns(4)
 
-    col1.markdown(f"""
-        <div class="kpi-card">
-            <div class="kpi-number">{total_candidates}</div>
-            <div class="kpi-title">👥 Total Candidates</div>
-        </div>
-    """, unsafe_allow_html=True)
-
-    col2.markdown(f"""
-        <div class="kpi-card">
-            <div class="kpi-number">{avg_score}%</div>
-            <div class="kpi-title">⭐ Avg Match Score</div>
-        </div>
-    """, unsafe_allow_html=True)
-
-    col3.markdown(f"""
-        <div class="kpi-card">
-            <div class="kpi-number">{shortlisted}</div>
-            <div class="kpi-title">🎯 Shortlisted (70%+)</div>
-        </div>
-    """, unsafe_allow_html=True)
-
-    col4.markdown(f"""
-        <div class="kpi-card">
-            <div class="kpi-number">{top_candidate}</div>
-            <div class="kpi-title">🏆 Top Candidate</div>
-        </div>
-    """, unsafe_allow_html=True)
+    col1.metric("👥 Total Candidates", total_candidates)
+    col2.metric("⭐ Avg Score", f"{avg_score}%")
+    col3.metric("🎯 Shortlisted (70%+)", shortlisted)
+    col4.metric("🏆 Top Candidate", top_candidate)
 
     st.markdown("---")
 
-    # ------------------------------
-  # ==================================================
-# 📊 2x2 PREMIUM ANALYTICS GRID
-# ==================================================
-
-    st.markdown("## 📊 Analytics Overview")
+    # ==================================================
+    # 📊 2x2 ANALYTICS GRID
+    # ==================================================
 
     col1, col2 = st.columns(2)
     col3, col4 = st.columns(2)
 
-# ---------------------------------------------------
-# 1️⃣ MATCH SCORE DISTRIBUTION
-# ---------------------------------------------------
+    # ------------------------------
+    # 1️⃣ Score Distribution
+    # ------------------------------
     with col1:
 
         score_bins = {
@@ -461,50 +414,48 @@ def show_dashboard():
 
         st.plotly_chart(fig_bar, use_container_width=True)
 
-
-# ---------------------------------------------------
-# 2️⃣ SCORE TREND LINE
-# ---------------------------------------------------
+    # ------------------------------
+    # 2️⃣ Score Trend
+    # ------------------------------
     with col2:
 
         sorted_df = df.sort_values("Interview Score")
 
         fig_line = go.Figure()
+
         fig_line.add_trace(go.Scatter(
             x=sorted_df["Name"],
             y=sorted_df["Interview Score"],
-            mode='lines+markers'
+            mode="lines+markers"
         ))
 
-            fig_line.update_layout(
-                title="📊 Candidate Score Trend",
-                template="plotly_dark",
-                yaxis_title="Score"
+        fig_line.update_layout(
+            title="📊 Candidate Score Trend",
+            template="plotly_dark"
         )
 
         st.plotly_chart(fig_line, use_container_width=True)
 
-
-# ---------------------------------------------------
-# 3️⃣ TOP MISSING SKILLS
-# ---------------------------------------------------
+    # ------------------------------
+    # 3️⃣ Missing Skills
+    # ------------------------------
     with col3:
 
-        all_possible_skills = [
+        all_skills = [
             "Python", "SQL", "Docker", "Kubernetes",
             "Machine Learning", "AWS", "React", "Git"
         ]
 
-        skill_missing_count = {}
+        skill_missing = {}
 
-        for skill in all_possible_skills:
+        for skill in all_skills:
             missing = df["Skills"].apply(
                 lambda x: skill.lower() not in str(x).lower()
             ).sum()
-            skill_missing_count[skill] = missing
+            skill_missing[skill] = missing
 
         sorted_missing = sorted(
-            skill_missing_count.items(),
+            skill_missing.items(),
             key=lambda x: x[1],
             reverse=True
         )[:5]
@@ -515,7 +466,7 @@ def show_dashboard():
         fig_skills = go.Figure(go.Bar(
             x=skill_counts,
             y=skill_names,
-            orientation='h'
+            orientation="h"
         ))
 
         fig_skills.update_layout(
@@ -525,10 +476,9 @@ def show_dashboard():
 
         st.plotly_chart(fig_skills, use_container_width=True)
 
-
-# ---------------------------------------------------
-# 4️⃣ ROLE DISTRIBUTION DONUT
-# ---------------------------------------------------
+    # ------------------------------
+    # 4️⃣ Role Distribution
+    # ------------------------------
     with col4:
 
         role_counts = df["Job Role"].value_counts()
@@ -536,20 +486,12 @@ def show_dashboard():
         fig_pie = go.Figure(data=[go.Pie(
             labels=role_counts.index,
             values=role_counts.values,
-            hole=0.6,
-            textinfo='label+percent'
+            hole=0.6
         )])
 
         fig_pie.update_layout(
             title="📊 Candidate Distribution by Role",
-            template="plotly_dark",
-            annotations=[dict(
-                text="Roles",
-                x=0.5,
-                y=0.5,
-                font_size=18,
-                showarrow=False
-            )]
+            template="plotly_dark"
         )
 
         st.plotly_chart(fig_pie, use_container_width=True)
@@ -1895,6 +1837,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
