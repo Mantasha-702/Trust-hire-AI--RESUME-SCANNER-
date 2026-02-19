@@ -19,5 +19,8 @@ passlib
 requests
 plotly
 fpdf2
+sendgrid
+
+
 
 
