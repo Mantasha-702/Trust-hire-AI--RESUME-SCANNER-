@@ -33,8 +33,6 @@ import os
 
 # 🌈 Page Setup (MUST be first Streamlit command)
 st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
-# 🌈 Page Setup (MUST be first Streamlit command)
-st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
 
 # ------------------- PASTE CSS HERE -------------------
 st.markdown("""
