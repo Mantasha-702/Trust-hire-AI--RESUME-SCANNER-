@@ -311,8 +311,217 @@ if not st.session_state.get("authenticated", False):
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 def show_dashboard():
+
     st.header("📊 Dashboard Overview")
-    st.write("Dashboard content here")
+
+    # ------------------------------
+    # SAFETY CHECK
+    # ------------------------------
+    if "df" not in st.session_state:
+        st.warning("⚠️ Please upload and process resumes first.")
+        return
+
+    df = st.session_state.df.copy()
+
+    if df is None or df.empty:
+        st.warning("⚠️ No data available.")
+        return
+
+    # ------------------------------
+    # SAFE COLUMN HANDLING
+    # ------------------------------
+    if "Interview Score" not in df.columns:
+        df["Interview Score"] = 0
+
+    if "Skills" not in df.columns:
+        df["Skills"] = ""
+
+    if "Job Role" not in df.columns:
+        df["Job Role"] = "Unknown"
+
+    if "Name" not in df.columns:
+        df["Name"] = "Candidate"
+
+    # ------------------------------
+    # CALCULATIONS (SAFE)
+    # ------------------------------
+    total_candidates = len(df)
+
+    avg_score = round(df["Interview Score"].mean(), 1) if total_candidates > 0 else 0
+
+    try:
+        top_candidate = df.loc[df["Interview Score"].idxmax()]["Name"]
+    except:
+        top_candidate = "N/A"
+
+    shortlisted = len(df[df["Interview Score"] >= 70])
+
+    # ------------------------------
+    # 🎨 ANIMATED KPI CARDS
+    # ------------------------------
+
+    st.markdown("""
+        <style>
+        .kpi-card {
+            background: linear-gradient(135deg, #1f1f1f, #2c2c2c);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            box-shadow: 0px 4px 15px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease;
+        }
+        .kpi-card:hover {
+            transform: scale(1.05);
+        }
+        .kpi-number {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .kpi-title {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    col1.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-number">{total_candidates}</div>
+            <div class="kpi-title">👥 Total Candidates</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    col2.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-number">{avg_score}%</div>
+            <div class="kpi-title">⭐ Avg Match Score</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    col3.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-number">{shortlisted}</div>
+            <div class="kpi-title">🎯 Shortlisted (70%+)</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    col4.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-number">{top_candidate}</div>
+            <div class="kpi-title">🏆 Top Candidate</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # ------------------------------
+    # 📈 MATCH SCORE DISTRIBUTION
+    # ------------------------------
+
+    score_bins = {
+        "90-100": 0,
+        "70-89": 0,
+        "50-69": 0,
+        "Below 50": 0
+    }
+
+    for score in df["Interview Score"]:
+        try:
+            score = float(score)
+        except:
+            score = 0
+
+        if score >= 90:
+            score_bins["90-100"] += 1
+        elif score >= 70:
+            score_bins["70-89"] += 1
+        elif score >= 50:
+            score_bins["50-69"] += 1
+        else:
+            score_bins["Below 50"] += 1
+
+    fig = go.Figure(
+        data=[go.Bar(
+            x=list(score_bins.keys()),
+            y=list(score_bins.values())
+        )]
+    )
+
+    fig.update_layout(
+        title="📈 Match Score Distribution",
+        xaxis_title="Score Range",
+        yaxis_title="Number of Candidates",
+        template="plotly_dark"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("---")
+
+    # ------------------------------
+    # 🏆 TOP 5 CANDIDATES
+    # ------------------------------
+
+    st.subheader("🏆 Top 5 Candidates")
+
+    try:
+        top5 = df.sort_values("Interview Score", ascending=False).head(5)
+        st.dataframe(top5[["Name", "Interview Score", "Job Role"]], use_container_width=True)
+    except:
+        st.info("Not enough data for Top Candidates.")
+
+    st.markdown("---")
+
+    # ------------------------------
+    # 🔥 SKILL GAP INSIGHTS
+    # ------------------------------
+
+    st.subheader("🔥 Most Missing Skills")
+
+    all_possible_skills = [
+        "Python", "SQL", "Docker", "Kubernetes",
+        "Machine Learning", "AWS", "React", "Git"
+    ]
+
+    skill_missing_count = {}
+
+    for skill in all_possible_skills:
+        missing = df["Skills"].apply(
+            lambda x: skill.lower() not in str(x).lower()
+        ).sum()
+        skill_missing_count[skill] = missing
+
+    sorted_missing = sorted(skill_missing_count.items(), key=lambda x: x[1], reverse=True)[:5]
+
+    for skill, count in sorted_missing:
+        st.write(f"• {skill} missing in {count} resumes")
+
+    st.markdown("---")
+
+    # ------------------------------
+    # 📊 ROLE DISTRIBUTION PIE
+    # ------------------------------
+
+    role_counts = df["Job Role"].value_counts()
+
+    pie_fig = go.Figure(
+        data=[go.Pie(
+            labels=role_counts.index,
+            values=role_counts.values,
+            hole=0.4
+        )]
+    )
+
+    pie_fig.update_layout(
+        title="📊 Role-wise Candidate Distribution",
+        template="plotly_dark"
+    )
+
+    st.plotly_chart(pie_fig, use_container_width=True)
+
 
 def show_filter_resumes():
 
@@ -627,8 +836,8 @@ def show_future_skills():
 
 def send_email_with_optional_attachment(to_email, subject, html_content, attachment_path=None):
 
-    api_key = os.getenv("SENDGRID_API_KEY")
-    sender_email = os.getenv("SENDER_EMAIL")
+    api_key = os.getenv("SENDGRID_API_KEY", "").strip()
+    sender_email = os.getenv("SENDER_EMAIL", "").strip()
 
     if not api_key:
         raise Exception("SENDGRID_API_KEY not found in environment variables.")
@@ -1654,6 +1863,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
