@@ -34,6 +34,34 @@ import os
 # 🌈 Page Setup (MUST be first Streamlit command)
 st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
 
+st.markdown("""
+<style>
+/* Main page background */
+body, .stApp {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* Sidebar background */
+section[data-testid="stSidebar"] {
+    background-color: #f5f5f5 !important;
+    color: #000000 !important;
+}
+
+/* Cards, containers, tables */
+.css-1d391kg, .css-1v3fvcr, .stBlock, .stDataFrame {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* Buttons */
+.stButton > button {
+    background-color: #4A90E2 !important;
+    color: white !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 
 # 🔥 ADD CSS HERE (Immediately After Page Config)
 st.markdown("""
@@ -409,7 +437,8 @@ def show_dashboard():
 
         fig_bar.update_layout(
             title="📈 Match Score Distribution",
-            template="plotly_dark"
+            template="plotly_white"
+
         )
 
         st.plotly_chart(fig_bar, use_container_width=True)
@@ -431,7 +460,8 @@ def show_dashboard():
 
         fig_line.update_layout(
             title="📊 Candidate Score Trend",
-            template="plotly_dark"
+            template="plotly_white"
+
         )
 
         st.plotly_chart(fig_line, use_container_width=True)
@@ -471,7 +501,8 @@ def show_dashboard():
 
         fig_skills.update_layout(
             title="🔥 Top Missing Skills",
-            template="plotly_dark"
+            template="plotly_white"
+
         )
 
         st.plotly_chart(fig_skills, use_container_width=True)
@@ -491,7 +522,7 @@ def show_dashboard():
 
         fig_pie.update_layout(
             title="📊 Candidate Distribution by Role",
-            template="plotly_dark"
+            template="plotly_white"
         )
 
         st.plotly_chart(fig_pie, use_container_width=True)
@@ -1837,6 +1868,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
