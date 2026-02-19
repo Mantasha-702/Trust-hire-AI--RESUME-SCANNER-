@@ -342,24 +342,24 @@ def show_dashboard():
     if "Name" not in df.columns:
         df["Name"] = "Candidate"
 
+    # Ensure numeric scores
+    df["Interview Score"] = pd.to_numeric(df["Interview Score"], errors="coerce").fillna(0)
+
     # ------------------------------
-    # CALCULATIONS (SAFE)
+    # CALCULATIONS
     # ------------------------------
     total_candidates = len(df)
-
-    avg_score = round(df["Interview Score"].mean(), 1) if total_candidates > 0 else 0
+    avg_score = round(df["Interview Score"].mean(), 1)
+    shortlisted = len(df[df["Interview Score"] >= 70])
 
     try:
         top_candidate = df.loc[df["Interview Score"].idxmax()]["Name"]
     except:
         top_candidate = "N/A"
 
-    shortlisted = len(df[df["Interview Score"] >= 70])
-
     # ------------------------------
     # 🎨 ANIMATED KPI CARDS
     # ------------------------------
-
     st.markdown("""
         <style>
         .kpi-card {
@@ -375,11 +375,11 @@ def show_dashboard():
             transform: scale(1.05);
         }
         .kpi-number {
-            font-size: 32px;
+            font-size: 30px;
             font-weight: bold;
         }
         .kpi-title {
-            font-size: 16px;
+            font-size: 15px;
             opacity: 0.8;
         }
         </style>
@@ -418,9 +418,8 @@ def show_dashboard():
     st.markdown("---")
 
     # ------------------------------
-    # 📈 MATCH SCORE DISTRIBUTION
+    # 📈 MATCH SCORE DISTRIBUTION BAR
     # ------------------------------
-
     score_bins = {
         "90-100": 0,
         "70-89": 0,
@@ -429,11 +428,6 @@ def show_dashboard():
     }
 
     for score in df["Interview Score"]:
-        try:
-            score = float(score)
-        except:
-            score = 0
-
         if score >= 90:
             score_bins["90-100"] += 1
         elif score >= 70:
@@ -443,43 +437,60 @@ def show_dashboard():
         else:
             score_bins["Below 50"] += 1
 
-    fig = go.Figure(
-        data=[go.Bar(
-            x=list(score_bins.keys()),
-            y=list(score_bins.values())
-        )]
-    )
+    fig_bar = go.Figure(go.Bar(
+        x=list(score_bins.keys()),
+        y=list(score_bins.values())
+    ))
 
-    fig.update_layout(
+    fig_bar.update_layout(
         title="📈 Match Score Distribution",
+        template="plotly_dark",
         xaxis_title="Score Range",
-        yaxis_title="Number of Candidates",
-        template="plotly_dark"
+        yaxis_title="Candidates"
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig_bar, use_container_width=True)
 
     st.markdown("---")
 
     # ------------------------------
-    # 🏆 TOP 5 CANDIDATES
+    # 📈 SCORE TREND LINE
     # ------------------------------
+    sorted_df = df.sort_values("Interview Score")
 
-    st.subheader("🏆 Top 5 Candidates")
+    fig_line = go.Figure()
+    fig_line.add_trace(go.Scatter(
+        y=sorted_df["Interview Score"],
+        mode='lines+markers'
+    ))
 
-    try:
-        top5 = df.sort_values("Interview Score", ascending=False).head(5)
-        st.dataframe(top5[["Name", "Interview Score", "Job Role"]], use_container_width=True)
-    except:
-        st.info("Not enough data for Top Candidates.")
+    fig_line.update_layout(
+        title="📊 Candidate Score Trend",
+        template="plotly_dark",
+        yaxis_title="Score"
+    )
+
+    st.plotly_chart(fig_line, use_container_width=True)
 
     st.markdown("---")
 
     # ------------------------------
-    # 🔥 SKILL GAP INSIGHTS
+    # 🏆 TOP 5 WITH PROGRESS BARS
     # ------------------------------
+    st.subheader("🏆 Top 5 Candidates Performance")
 
-    st.subheader("🔥 Most Missing Skills")
+    top5 = df.sort_values("Interview Score", ascending=False).head(5)
+
+    for _, row in top5.iterrows():
+        st.write(f"**{row['Name']}** ({row['Job Role']})")
+        st.progress(int(row["Interview Score"]))
+
+    st.markdown("---")
+
+    # ------------------------------
+    # 🔥 SKILL GAP BAR CHART
+    # ------------------------------
+    st.subheader("🔥 Top Missing Skills")
 
     all_possible_skills = [
         "Python", "SQL", "Docker", "Kubernetes",
@@ -496,31 +507,64 @@ def show_dashboard():
 
     sorted_missing = sorted(skill_missing_count.items(), key=lambda x: x[1], reverse=True)[:5]
 
-    for skill, count in sorted_missing:
-        st.write(f"• {skill} missing in {count} resumes")
+    skill_names = [x[0] for x in sorted_missing]
+    skill_counts = [x[1] for x in sorted_missing]
+
+    fig_skills = go.Figure(go.Bar(
+        x=skill_counts,
+        y=skill_names,
+        orientation='h'
+    ))
+
+    fig_skills.update_layout(
+        title="📊 Skill Gap Analysis",
+        template="plotly_dark",
+        xaxis_title="Candidates Missing Skill"
+    )
+
+    st.plotly_chart(fig_skills, use_container_width=True)
+
+    # ------------------------------
+    # 💡 AI INSIGHT BOX
+    # ------------------------------
+    if sorted_missing:
+        highest_gap_skill = sorted_missing[0][0]
+
+        st.markdown(f"""
+        <div style='
+        background: linear-gradient(135deg,#1f1f1f,#2a2a2a);
+        padding:20px;
+        border-radius:15px;
+        box-shadow:0px 4px 20px rgba(0,0,0,0.4);
+        margin-top:20px;
+        '>
+        <h4>💡 AI Hiring Insight</h4>
+        <p>Most candidates are missing <b>{highest_gap_skill}</b>.
+        Consider prioritizing this skill during screening.</p>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("---")
 
     # ------------------------------
-    # 📊 ROLE DISTRIBUTION PIE
+    # 📊 PREMIUM DONUT ROLE CHART
     # ------------------------------
-
     role_counts = df["Job Role"].value_counts()
 
-    pie_fig = go.Figure(
-        data=[go.Pie(
-            labels=role_counts.index,
-            values=role_counts.values,
-            hole=0.4
-        )]
+    fig_pie = go.Figure(data=[go.Pie(
+        labels=role_counts.index,
+        values=role_counts.values,
+        hole=0.6,
+        textinfo='label+percent'
+    )])
+
+    fig_pie.update_layout(
+        title="📊 Candidate Distribution by Role",
+        template="plotly_dark",
+        annotations=[dict(text="Roles", x=0.5, y=0.5, font_size=20, showarrow=False)]
     )
 
-    pie_fig.update_layout(
-        title="📊 Role-wise Candidate Distribution",
-        template="plotly_dark"
-    )
-
-    st.plotly_chart(pie_fig, use_container_width=True)
+    st.plotly_chart(fig_pie, use_container_width=True)
 
 
 def show_filter_resumes():
@@ -1863,6 +1907,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
