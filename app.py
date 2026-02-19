@@ -11,7 +11,8 @@ from googletrans import Translator
 from PIL import Image
 import base64
 from datetime import datetime
-import yagmail
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
 from streamlit_webrtc import webrtc_streamer, WebRtcMode
 import speech_recognition as sr
 import av
@@ -28,7 +29,6 @@ from passlib.hash import bcrypt
 import random, string  
 import requests
 import plotly.graph_objects as go
-from fpdf import FPDF
 import os
 
 # 🌈 Page Setup (MUST be first Streamlit command)
@@ -489,10 +489,6 @@ def show_filter_resumes():
             mime="application/json"
         )
 
-#future skill prediction
-
-  
-# ---------------- Future Skill Prediction ----------------
 # ---------------- Future Skill Prediction ----------------
 def show_future_skills():
 
@@ -626,11 +622,46 @@ def show_future_skills():
     else:
         st.warning("⚠️ No matching future skills found. Try updating role extraction or adding more skills to resume.")
 
-# -------------------- Email Section --------------------
+# -------------------- Email Section (Production Safe) --------------------
 
 
-EMAIL_SENDER = os.getenv("EMAIL_SENDER")
-EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+def send_email_with_optional_attachment(to_email, subject, html_content, attachment_path=None):
+
+    api_key = os.getenv("SENDGRID_API_KEY")
+    sender_email = os.getenv("SENDER_EMAIL")
+
+    if not api_key:
+        raise Exception("SENDGRID_API_KEY not found in environment variables.")
+
+    if not sender_email:
+        raise Exception("SENDER_EMAIL not found in environment variables.")
+
+    message = Mail(
+        from_email=sender_email,
+        to_emails=to_email,
+        subject=subject,
+        html_content=html_content
+    )
+
+    # Attach Resume (Optional)
+    if attachment_path and os.path.exists(attachment_path):
+        with open(attachment_path, "rb") as f:
+            file_data = f.read()
+            encoded_file = base64.b64encode(file_data).decode()
+
+        attachment = Attachment(
+            FileContent(encoded_file),
+            FileName(os.path.basename(attachment_path)),
+            FileType("application/pdf"),
+            Disposition("attachment")
+        )
+
+        message.attachment = attachment
+
+    sg = SendGridAPIClient(api_key)
+    response = sg.send(message)
+
+    return response.status_code
 
 
 def show_send_emails():
@@ -674,21 +705,13 @@ Best Regards,
 TrustHire Team"""
     )
 
+    attach_resume = st.checkbox("📎 Attach Resume PDF (if available)")
+
     # ---------------- Send Emails ----------------
     if st.button("📤 Send Emails"):
 
         if not selected_names:
             st.warning("⚠️ Please select at least one candidate.")
-            return
-
-        # 🔐 Email Login
-        try:
-            yag = yagmail.SMTP(
-                user=EMAIL_SENDER,
-                password=EMAIL_PASSWORD
-            )
-        except Exception:
-            st.error("❌ Failed to connect to Gmail. Check your App Password.")
             return
 
         success_count = 0
@@ -703,7 +726,6 @@ TrustHire Team"""
             email = row.iloc[0]["Email"]
             role = row.iloc[0]["Job Role"]
 
-            # Skip invalid emails
             if not email or email == "Not found" or "@" not in email:
                 st.warning(f"⚠️ Invalid email for {name}. Skipping.")
                 continue
@@ -715,16 +737,29 @@ TrustHire Team"""
                 time=interview_time.strftime("%I:%M %p")
             )
 
+            html_body = body.replace("\n", "<br>")
+
+            # Optional Resume Path (if your dataframe has Resume_Path column)
+            resume_path = None
+            if attach_resume and "Resume_Path" in row.columns:
+                resume_path = row.iloc[0].get("Resume_Path")
+
             try:
-                yag.send(
-                    to=email,
+                status_code = send_email_with_optional_attachment(
+                    to_email=email,
                     subject=email_subject,
-                    contents=body
+                    html_content=html_body,
+                    attachment_path=resume_path
                 )
-                success_count += 1
-                st.success(f"✅ Email sent to {name}")
+
+                if status_code in [200, 202]:
+                    success_count += 1
+                    st.success(f"✅ Email sent to {name}")
+                else:
+                    st.error(f"❌ Failed for {name} (Status Code: {status_code})")
+
             except Exception as e:
-                st.error(f"❌ Failed for {name}: {e}")
+                st.error(f"❌ Failed for {name}: {str(e)}")
 
         st.info(f"📊 {success_count} emails sent successfully.")
 
@@ -773,25 +808,19 @@ def show_resume_viewer():
         )
 
         # 🔹 PDF Preview
-        resume_file = row.get("Resume File")
+        resume_file = row.get("Resume_Path")
 
+        
         if resume_file:
 
             st.markdown("**📄 Resume Preview**")
 
             try:
-                # If stored as bytes
-                if isinstance(resume_file, bytes):
-                    b64_pdf = base64.b64encode(resume_file).decode("utf-8")
+                if os.path.exists(resume_file):
 
-                # If stored as file path
-                elif isinstance(resume_file, str):
                     with open(resume_file, "rb") as f:
                         b64_pdf = base64.b64encode(f.read()).decode("utf-8")
-                else:
-                    b64_pdf = None
 
-                if b64_pdf:
                     pdf_display = f"""
                         <iframe 
                             src="data:application/pdf;base64,{b64_pdf}" 
@@ -800,10 +829,14 @@ def show_resume_viewer():
                             type="application/pdf">
                         </iframe>
                     """
+
                     st.markdown(pdf_display, unsafe_allow_html=True)
 
-            except Exception:
-                st.warning("⚠️ Unable to preview PDF.")
+                else:
+                    st.warning("⚠️ Resume file not found.")
+
+            except Exception as e:
+                st.warning(f"⚠️ Unable to preview PDF: {e}")
 
         # 🔹 Download Button
         st.download_button(
@@ -1541,8 +1574,12 @@ def process_resumes(uploaded_files):
                 "Expected Salary": salary
             })
 
-            file.seek(0)
-            resume_bytes = file.read()
+            os.makedirs("resumes", exist_ok=True)
+
+            file_path = os.path.join("resumes", file.name)
+
+            with open(file_path, "wb") as f:
+                f.write(file.getbuffer())
 
             data.append({
 
@@ -1561,7 +1598,7 @@ def process_resumes(uploaded_files):
                 "Rating": rating,
                 "Summary": summary,
                 "Full Text": text,
-                "Resume File": resume_bytes,
+                "Resume_Path": file_path,
                 "Date Uploaded": datetime.now().strftime("%Y-%m-%d")
 
             })
@@ -1617,6 +1654,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
