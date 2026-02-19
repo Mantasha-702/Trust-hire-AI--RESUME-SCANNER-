@@ -422,137 +422,137 @@ def show_dashboard():
 # 📊 2x2 PREMIUM ANALYTICS GRID
 # ==================================================
 
-st.markdown("## 📊 Analytics Overview")
+    st.markdown("## 📊 Analytics Overview")
 
-col1, col2 = st.columns(2)
-col3, col4 = st.columns(2)
+    col1, col2 = st.columns(2)
+    col3, col4 = st.columns(2)
 
 # ---------------------------------------------------
 # 1️⃣ MATCH SCORE DISTRIBUTION
 # ---------------------------------------------------
-with col1:
+    with col1:
 
-    score_bins = {
-        "90-100": 0,
-        "70-89": 0,
-        "50-69": 0,
-        "Below 50": 0
-    }
+        score_bins = {
+            "90-100": 0,
+            "70-89": 0,
+            "50-69": 0,
+            "Below 50": 0
+        }
 
-    for score in df["Interview Score"]:
-        if score >= 90:
-            score_bins["90-100"] += 1
-        elif score >= 70:
-            score_bins["70-89"] += 1
-        elif score >= 50:
-            score_bins["50-69"] += 1
-        else:
-            score_bins["Below 50"] += 1
+        for score in df["Interview Score"]:
+            if score >= 90:
+                score_bins["90-100"] += 1
+            elif score >= 70:
+                score_bins["70-89"] += 1
+            elif score >= 50:
+                score_bins["50-69"] += 1
+            else:
+                score_bins["Below 50"] += 1
 
-    fig_bar = go.Figure(go.Bar(
-        x=list(score_bins.keys()),
-        y=list(score_bins.values())
-    ))
+        fig_bar = go.Figure(go.Bar(
+            x=list(score_bins.keys()),
+            y=list(score_bins.values())
+        ))
 
-    fig_bar.update_layout(
-        title="📈 Match Score Distribution",
-        template="plotly_dark"
-    )
+        fig_bar.update_layout(
+            title="📈 Match Score Distribution",
+            template="plotly_dark"
+        )
 
-    st.plotly_chart(fig_bar, use_container_width=True)
+        st.plotly_chart(fig_bar, use_container_width=True)
 
 
 # ---------------------------------------------------
 # 2️⃣ SCORE TREND LINE
 # ---------------------------------------------------
-with col2:
+    with col2:
 
-    sorted_df = df.sort_values("Interview Score")
+        sorted_df = df.sort_values("Interview Score")
 
-    fig_line = go.Figure()
-    fig_line.add_trace(go.Scatter(
-        x=sorted_df["Name"],
-        y=sorted_df["Interview Score"],
-        mode='lines+markers'
-    ))
+        fig_line = go.Figure()
+        fig_line.add_trace(go.Scatter(
+            x=sorted_df["Name"],
+            y=sorted_df["Interview Score"],
+            mode='lines+markers'
+        ))
 
-    fig_line.update_layout(
-        title="📊 Candidate Score Trend",
-        template="plotly_dark",
-        yaxis_title="Score"
-    )
+            fig_line.update_layout(
+                title="📊 Candidate Score Trend",
+                template="plotly_dark",
+                yaxis_title="Score"
+        )
 
-    st.plotly_chart(fig_line, use_container_width=True)
+        st.plotly_chart(fig_line, use_container_width=True)
 
 
 # ---------------------------------------------------
 # 3️⃣ TOP MISSING SKILLS
 # ---------------------------------------------------
-with col3:
+    with col3:
 
-    all_possible_skills = [
-        "Python", "SQL", "Docker", "Kubernetes",
-        "Machine Learning", "AWS", "React", "Git"
-    ]
+        all_possible_skills = [
+            "Python", "SQL", "Docker", "Kubernetes",
+            "Machine Learning", "AWS", "React", "Git"
+        ]
 
-    skill_missing_count = {}
+        skill_missing_count = {}
 
-    for skill in all_possible_skills:
-        missing = df["Skills"].apply(
-            lambda x: skill.lower() not in str(x).lower()
-        ).sum()
-        skill_missing_count[skill] = missing
+        for skill in all_possible_skills:
+            missing = df["Skills"].apply(
+                lambda x: skill.lower() not in str(x).lower()
+            ).sum()
+            skill_missing_count[skill] = missing
 
-    sorted_missing = sorted(
-        skill_missing_count.items(),
-        key=lambda x: x[1],
-        reverse=True
-    )[:5]
+        sorted_missing = sorted(
+            skill_missing_count.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )[:5]
 
-    skill_names = [x[0] for x in sorted_missing]
-    skill_counts = [x[1] for x in sorted_missing]
+        skill_names = [x[0] for x in sorted_missing]
+        skill_counts = [x[1] for x in sorted_missing]
 
-    fig_skills = go.Figure(go.Bar(
-        x=skill_counts,
-        y=skill_names,
-        orientation='h'
-    ))
+        fig_skills = go.Figure(go.Bar(
+            x=skill_counts,
+            y=skill_names,
+            orientation='h'
+        ))
 
-    fig_skills.update_layout(
-        title="🔥 Top Missing Skills",
-        template="plotly_dark"
-    )
+        fig_skills.update_layout(
+            title="🔥 Top Missing Skills",
+            template="plotly_dark"
+        )
 
-    st.plotly_chart(fig_skills, use_container_width=True)
+        st.plotly_chart(fig_skills, use_container_width=True)
 
 
 # ---------------------------------------------------
 # 4️⃣ ROLE DISTRIBUTION DONUT
 # ---------------------------------------------------
-with col4:
+    with col4:
 
-    role_counts = df["Job Role"].value_counts()
+        role_counts = df["Job Role"].value_counts()
 
-    fig_pie = go.Figure(data=[go.Pie(
-        labels=role_counts.index,
-        values=role_counts.values,
-        hole=0.6,
-        textinfo='label+percent'
-    )])
+        fig_pie = go.Figure(data=[go.Pie(
+            labels=role_counts.index,
+            values=role_counts.values,
+            hole=0.6,
+            textinfo='label+percent'
+        )])
 
-    fig_pie.update_layout(
-        title="📊 Candidate Distribution by Role",
-        template="plotly_dark",
-        annotations=[dict(
-            text="Roles",
-            x=0.5,
-            y=0.5,
-            font_size=18,
-            showarrow=False
-        )]
-    )
+        fig_pie.update_layout(
+            title="📊 Candidate Distribution by Role",
+            template="plotly_dark",
+            annotations=[dict(
+                text="Roles",
+                x=0.5,
+                y=0.5,
+                font_size=18,
+                showarrow=False
+            )]
+        )
 
-    st.plotly_chart(fig_pie, use_container_width=True)
+        st.plotly_chart(fig_pie, use_container_width=True)
 
 
 def show_filter_resumes():
@@ -1895,6 +1895,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
