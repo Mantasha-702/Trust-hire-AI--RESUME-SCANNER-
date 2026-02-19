@@ -33,106 +33,132 @@ import os
 
 # 🌈 Page Setup (MUST be first Streamlit command)
 st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
+# 🌈 Page Setup (MUST be first Streamlit command)
+st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
+
+# ------------------- PASTE CSS HERE -------------------
+st.markdown("""
+<style>
+/* Top Navigation Radio Buttons - Button Style */
+div[role="radiogroup"] {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 12px !important;
+}
+
+div[role="radiogroup"] label {
+    background-color: #e0e0e0 !important;   
+    color: #1f2d3d !important;             
+    border-radius: 12px;
+    padding: 10px 25px;
+    font-weight:
+
 
 st.markdown("""
 <style>
-/* Main page background */
-body, .stApp {
+/* =======================
+   Universal Light Theme
+   ======================= */
+
+/* App Background */
+.stApp, body {
     background-color: #ffffff !important;
     color: #000000 !important;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-/* Sidebar background */
+/* Sidebar */
 section[data-testid="stSidebar"] {
     background-color: #f5f5f5 !important;
     color: #000000 !important;
 }
 
-/* Cards, containers, tables */
-.css-1d391kg, .css-1v3fvcr, .stBlock, .stDataFrame {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-}
-
-/* Buttons */
-.stButton > button {
-    background-color: #4A90E2 !important;
-    color: white !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-# 🔥 ADD CSS HERE (Immediately After Page Config)
-st.markdown("""
-<style>
-
-/* App Background */
-.stApp {
-    background-color: #f4f6f9;
-    font-family: 'Segoe UI', sans-serif;
-}
-
-/* Center Main Content */
-.main .block-container {
-    max-width: 1100px;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-    margin: auto;
-}
-
-/* Titles */
-h1 {
-    color: #1a1a1a;
-    text-align: center;
-    font-weight: 700;
-}
-
-h2, h3 {
-    color: #222222;
-    font-weight: 600;
-}
-
-/* All Normal Text */
-p, div, span, label {
-    color: #2c2c2c !important;
-    font-size: 15px;
-}
-
-/* Navigation Radio Buttons */
-div[role="radiogroup"] {
-    justify-content: center;
-}
-
-div[role="radiogroup"] label {
-    font-weight: 600 !important;
-    color: #1f2d3d !important;
-}
-
-/* Sidebar */
-section[data-testid="stSidebar"] {
-    background-color: #e9ecef;
-}
-
+/* Sidebar text */
 section[data-testid="stSidebar"] * {
     color: #1f2d3d !important;
 }
 
+/* Cards, containers, tables */
+.css-1d391kg, .css-1v3fvcr, .stBlock, .stDataFrame, .stAlert {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-radius: 10px;
+}
+
 /* Buttons */
 .stButton > button {
-    background-color: #4a86c5;
-    color: white;
+    background: linear-gradient(90deg, #5a9bd6, #4a86c5) !important;
+    color: white !important;
     border-radius: 8px;
     font-weight: 600;
     height: 40px;
 }
 
-.stButton > button:hover {
-    background-color: #356ca3;
+/* Navigation Radio Buttons */
+div[role="radiogroup"] {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 12px !important;
+}
+div[role="radiogroup"] label {
+    background-color: #f4f4f4 !important;
+    color: #1f2d3d !important;
+    border-radius: 10px;
+    padding: 10px 25px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+div[role="radiogroup"] input:checked + label {
+    background-color: #4a86c5 !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
+/* Text inputs */
+.stTextInput > div > div > input {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    padding: 12px;
+}
+
+/* Dataframe tables */
+.stDataFrame table {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* PDF iframe preview */
+iframe {
+    border: 1px solid #ccc;
+    border-radius: 10px;
+}
+
+/* Skill Cards in future skill predictor */
+.skill-card {
+    background: #f8f9fa !important;
+    color: #1f2d3d !important;
+    padding: 20px;
+    border-radius: 18px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.skill-title {
+    color: #4a86c5 !important;
+}
+.demand-text {
+    color: #555 !important;
+}
+.learn-btn {
+    background-color: #4a86c5 !important;
+    color: white !important;
+}
 </style>
 """, unsafe_allow_html=True)
+
 
 for key in ["df", "filtered", "chat_history", "voice_text"]:
     if key not in st.session_state:
@@ -437,7 +463,10 @@ def show_dashboard():
 
         fig_bar.update_layout(
             title="📈 Match Score Distribution",
-            template="plotly_white"
+            template="plotly_white",
+            paper_bgcolor="white",      # background of container
+            plot_bgcolor="white",       # background of plot area
+            font=dict(color="black") 
 
         )
 
@@ -460,7 +489,10 @@ def show_dashboard():
 
         fig_line.update_layout(
             title="📊 Candidate Score Trend",
-            template="plotly_white"
+            template="plotly_white",
+            paper_bgcolor="white",      # background of container
+            plot_bgcolor="white",       # background of plot area
+            font=dict(color="black") 
 
         )
 
@@ -501,7 +533,10 @@ def show_dashboard():
 
         fig_skills.update_layout(
             title="🔥 Top Missing Skills",
-            template="plotly_white"
+            template="plotly_white",
+            paper_bgcolor="white",      # background of container
+            plot_bgcolor="white",       # background of plot area
+            font=dict(color="black") 
 
         )
 
@@ -522,7 +557,10 @@ def show_dashboard():
 
         fig_pie.update_layout(
             title="📊 Candidate Distribution by Role",
-            template="plotly_white"
+            template="plotly_white",
+            paper_bgcolor="white",      # background of container
+            plot_bgcolor="white",       # background of plot area
+            font=dict(color="black") 
         )
 
         st.plotly_chart(fig_pie, use_container_width=True)
@@ -1868,6 +1906,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
