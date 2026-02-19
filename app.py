@@ -51,8 +51,10 @@ div[role="radiogroup"] label {
     color: #1f2d3d !important;             
     border-radius: 12px;
     padding: 10px 25px;
-    font-weight:
-
+    font-weight: 600;   
+}
+</style>
+""", unsafe_allow_html=True)
 
 st.markdown("""
 <style>
@@ -1906,6 +1908,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
