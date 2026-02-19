@@ -418,8 +418,20 @@ def show_dashboard():
     st.markdown("---")
 
     # ------------------------------
-    # 📈 MATCH SCORE DISTRIBUTION BAR
-    # ------------------------------
+  # ==================================================
+# 📊 2x2 PREMIUM ANALYTICS GRID
+# ==================================================
+
+st.markdown("## 📊 Analytics Overview")
+
+col1, col2 = st.columns(2)
+col3, col4 = st.columns(2)
+
+# ---------------------------------------------------
+# 1️⃣ MATCH SCORE DISTRIBUTION
+# ---------------------------------------------------
+with col1:
+
     score_bins = {
         "90-100": 0,
         "70-89": 0,
@@ -444,22 +456,22 @@ def show_dashboard():
 
     fig_bar.update_layout(
         title="📈 Match Score Distribution",
-        template="plotly_dark",
-        xaxis_title="Score Range",
-        yaxis_title="Candidates"
+        template="plotly_dark"
     )
 
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    st.markdown("---")
 
-    # ------------------------------
-    # 📈 SCORE TREND LINE
-    # ------------------------------
+# ---------------------------------------------------
+# 2️⃣ SCORE TREND LINE
+# ---------------------------------------------------
+with col2:
+
     sorted_df = df.sort_values("Interview Score")
 
     fig_line = go.Figure()
     fig_line.add_trace(go.Scatter(
+        x=sorted_df["Name"],
         y=sorted_df["Interview Score"],
         mode='lines+markers'
     ))
@@ -472,25 +484,11 @@ def show_dashboard():
 
     st.plotly_chart(fig_line, use_container_width=True)
 
-    st.markdown("---")
 
-    # ------------------------------
-    # 🏆 TOP 5 WITH PROGRESS BARS
-    # ------------------------------
-    st.subheader("🏆 Top 5 Candidates Performance")
-
-    top5 = df.sort_values("Interview Score", ascending=False).head(5)
-
-    for _, row in top5.iterrows():
-        st.write(f"**{row['Name']}** ({row['Job Role']})")
-        st.progress(int(row["Interview Score"]))
-
-    st.markdown("---")
-
-    # ------------------------------
-    # 🔥 SKILL GAP BAR CHART
-    # ------------------------------
-    st.subheader("🔥 Top Missing Skills")
+# ---------------------------------------------------
+# 3️⃣ TOP MISSING SKILLS
+# ---------------------------------------------------
+with col3:
 
     all_possible_skills = [
         "Python", "SQL", "Docker", "Kubernetes",
@@ -505,7 +503,11 @@ def show_dashboard():
         ).sum()
         skill_missing_count[skill] = missing
 
-    sorted_missing = sorted(skill_missing_count.items(), key=lambda x: x[1], reverse=True)[:5]
+    sorted_missing = sorted(
+        skill_missing_count.items(),
+        key=lambda x: x[1],
+        reverse=True
+    )[:5]
 
     skill_names = [x[0] for x in sorted_missing]
     skill_counts = [x[1] for x in sorted_missing]
@@ -517,38 +519,18 @@ def show_dashboard():
     ))
 
     fig_skills.update_layout(
-        title="📊 Skill Gap Analysis",
-        template="plotly_dark",
-        xaxis_title="Candidates Missing Skill"
+        title="🔥 Top Missing Skills",
+        template="plotly_dark"
     )
 
     st.plotly_chart(fig_skills, use_container_width=True)
 
-    # ------------------------------
-    # 💡 AI INSIGHT BOX
-    # ------------------------------
-    if sorted_missing:
-        highest_gap_skill = sorted_missing[0][0]
 
-        st.markdown(f"""
-        <div style='
-        background: linear-gradient(135deg,#1f1f1f,#2a2a2a);
-        padding:20px;
-        border-radius:15px;
-        box-shadow:0px 4px 20px rgba(0,0,0,0.4);
-        margin-top:20px;
-        '>
-        <h4>💡 AI Hiring Insight</h4>
-        <p>Most candidates are missing <b>{highest_gap_skill}</b>.
-        Consider prioritizing this skill during screening.</p>
-        </div>
-        """, unsafe_allow_html=True)
+# ---------------------------------------------------
+# 4️⃣ ROLE DISTRIBUTION DONUT
+# ---------------------------------------------------
+with col4:
 
-    st.markdown("---")
-
-    # ------------------------------
-    # 📊 PREMIUM DONUT ROLE CHART
-    # ------------------------------
     role_counts = df["Job Role"].value_counts()
 
     fig_pie = go.Figure(data=[go.Pie(
@@ -561,7 +543,13 @@ def show_dashboard():
     fig_pie.update_layout(
         title="📊 Candidate Distribution by Role",
         template="plotly_dark",
-        annotations=[dict(text="Roles", x=0.5, y=0.5, font_size=20, showarrow=False)]
+        annotations=[dict(
+            text="Roles",
+            x=0.5,
+            y=0.5,
+            font_size=18,
+            showarrow=False
+        )]
     )
 
     st.plotly_chart(fig_pie, use_container_width=True)
@@ -1907,6 +1895,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
