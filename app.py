@@ -82,110 +82,6 @@ div[role="radiogroup"] label {
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-<style>
-/* =======================
-   Universal Light Theme
-   ======================= */
-
-/* App Background */
-.stApp, body {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    font-family: 'Segoe UI', sans-serif;
-}
-
-/* Sidebar */
-section[data-testid="stSidebar"] {
-    background-color: #f5f5f5 !important;
-    color: #000000 !important;
-}
-
-/* Sidebar text */
-section[data-testid="stSidebar"] * {
-    color: #1f2d3d !important;
-}
-
-/* Cards, containers, tables */
-.css-1d391kg, .css-1v3fvcr, .stBlock, .stDataFrame, .stAlert {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    border-radius: 10px;
-}
-
-/* Buttons */
-.stButton > button {
-    background: linear-gradient(90deg, #5a9bd6, #4a86c5) !important;
-    color: white !important;
-    border-radius: 8px;
-    font-weight: 600;
-    height: 40px;
-}
-
-/* Navigation Radio Buttons */
-div[role="radiogroup"] {
-    display: flex !important;
-    justify-content: center !important;
-    gap: 12px !important;
-}
-div[role="radiogroup"] label {
-    background-color: #f4f4f4 !important;
-    color: #1f2d3d !important;
-    border-radius: 10px;
-    padding: 10px 25px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: all 0.2s ease;
-}
-div[role="radiogroup"] input:checked + label {
-    background-color: #4a86c5 !important;
-    color: white !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-/* Text inputs */
-.stTextInput > div > div > input {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    padding: 12px;
-}
-
-/* Dataframe tables */
-.stDataFrame table {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-}
-
-/* PDF iframe preview */
-iframe {
-    border: 1px solid #ccc;
-    border-radius: 10px;
-}
-
-/* Skill Cards in future skill predictor */
-.skill-card {
-    background: #f8f9fa !important;
-    color: #1f2d3d !important;
-    padding: 20px;
-    border-radius: 18px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-}
-.skill-title {
-    color: #4a86c5 !important;
-}
-.demand-text {
-    color: #555 !important;
-}
-.learn-btn {
-    background-color: #4a86c5 !important;
-    color: white !important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 
 for key in ["df", "filtered", "chat_history", "voice_text"]:
@@ -1937,6 +1833,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
