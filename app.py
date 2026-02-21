@@ -33,7 +33,35 @@ import os
 
 # 🌈 Page Setup (MUST be first Streamlit command)
 st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&display=swap');
 
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+h1, h2, h3, h4 {
+    font-family: 'Montserrat', sans-serif;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+st.markdown("""
+<style>
+
+/* White Card Style */
+.white-card {
+    background: white;
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 6px 25px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
+}
+
+</style>
+""", unsafe_allow_html=True)
 # ------------------- PASTE CSS HERE -------------------
 st.markdown("""
 <style>
@@ -617,6 +645,7 @@ def show_filter_resumes():
     st.dataframe(df, use_container_width=True)
     
     # -------------------- Filters --------------------
+    st.markdown('<div class="white-card">', unsafe_allow_html=True)
     st.subheader("🔎 Filter Resumes")
 
     col1, col2, col3 = st.columns(3)
@@ -687,7 +716,7 @@ def show_filter_resumes():
         filtered = filtered[filtered["Date Uploaded"].isin(date_filter)]
 
     st.session_state.filtered = filtered
-
+    st.markdown('</div>', unsafe_allow_html=True)
     # -------------------- Display Table --------------------
     st.subheader("📊 Filtered Results")
 
@@ -743,7 +772,7 @@ def show_filter_resumes():
 
 # ---------------- Future Skill Prediction ----------------
 def show_future_skills():
-
+    st.markdown('<div class="white-card">', unsafe_allow_html=True)
     st.markdown("## 📈 Future Skills Predictor")
 
     # ---------- Data Source ----------
@@ -753,8 +782,9 @@ def show_future_skills():
         data_source = st.session_state.get("df")
 
     if data_source is None or data_source.empty:
-        st.warning("⚠️ Please upload and process resumes first.")
-        return
+    st.warning("⚠️ Please upload and process resumes first.")
+    st.markdown('</div>', unsafe_allow_html=True)
+    return
 
     # ---------- Candidate Selection ----------
     selected_name = st.selectbox(
@@ -771,8 +801,9 @@ def show_future_skills():
     trending_skills, matched_role, match_confidence = fetch_trending_skills_from_api(extracted_role)
 
     if not trending_skills:
-        st.warning("⚠️ No trending skills available for this role.")
-        return
+    st.warning("⚠️ No trending skills available for this role.")
+    st.markdown('</div>', unsafe_allow_html=True)
+    return
 
     # ---------- Current Skills ----------
     current_skills = []
@@ -873,7 +904,7 @@ def show_future_skills():
 
     else:
         st.warning("⚠️ No matching future skills found. Try updating role extraction or adding more skills to resume.")
-
+        st.markdown('</div>', unsafe_allow_html=True)
 # -------------------- Email Section (Production Safe) --------------------
 
 
@@ -1906,6 +1937,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
