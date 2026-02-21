@@ -782,9 +782,9 @@ def show_future_skills():
         data_source = st.session_state.get("df")
 
     if data_source is None or data_source.empty:
-    st.warning("⚠️ Please upload and process resumes first.")
-    st.markdown('</div>', unsafe_allow_html=True)
-    return
+        st.warning("⚠️ Please upload and process resumes first.")
+        st.markdown('</div>', unsafe_allow_html=True)
+        return
 
     # ---------- Candidate Selection ----------
     selected_name = st.selectbox(
@@ -801,9 +801,9 @@ def show_future_skills():
     trending_skills, matched_role, match_confidence = fetch_trending_skills_from_api(extracted_role)
 
     if not trending_skills:
-    st.warning("⚠️ No trending skills available for this role.")
-    st.markdown('</div>', unsafe_allow_html=True)
-    return
+        st.warning("⚠️ No trending skills available for this role.")
+        st.markdown('</div>', unsafe_allow_html=True)
+        return
 
     # ---------- Current Skills ----------
     current_skills = []
@@ -1937,6 +1937,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
