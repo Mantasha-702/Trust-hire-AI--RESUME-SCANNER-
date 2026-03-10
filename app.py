@@ -105,6 +105,52 @@ div[role="radiogroup"] label {
 </style>
 """, unsafe_allow_html=True)
 # ---------- END THEME ----------
+st.markdown("""
+<style>
+
+/* Main background */
+.stApp {
+    background-color: #f5f6fa;
+}
+
+/* Make dataframe tables white */
+div[data-testid="stDataFrame"] {
+    background-color: white !important;
+    border-radius: 10px;
+}
+
+/* Static tables */
+div[data-testid="stTable"] {
+    background-color: white !important;
+}
+
+/* Metric boxes */
+div[data-testid="metric-container"] {
+    background-color: #f3f4f6 !important;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+/* Expanders */
+details {
+    background-color: #f3f4f6 !important;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+/* Input boxes */
+input, textarea {
+    background-color: white !important;
+}
+
+/* Alerts / messages */
+div[data-testid="stAlert"] {
+    background-color: #f3f4f6 !important;
+    color: #111 !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 st.markdown("""
 <style>
@@ -800,36 +846,24 @@ def show_future_skills():
     st.markdown("""
         <style>
         .skill-card {
-            background: #0f172a;
+            background: #ffffff;
             padding: 25px;
             border-radius: 18px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
             margin-bottom: 20px;
         }
+
         .skill-title {
             font-size: 22px;
             font-weight: 700;
-            color: #60a5fa;
+            color: #1f2937;
             margin-bottom: 10px;
         }
-        .demand-text {
-            color: #e2e8f0;
-            font-size: 14px;
-            margin-top: 6px;
-        }
-        .learn-btn {
-            margin-top: 12px;
-            background-color: #3b82f6;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        </style>
-    """, unsafe_allow_html=True)
 
+        .demand-text {
+            color: #374151;
+            font-size: 14px;
+        }
         # ---------- Display Cards ----------
     if future_suggestions:
 
@@ -1402,12 +1436,12 @@ def show_voice_summary():
     st.markdown("""
     <style>
     .summary-box {
-        background-color: #1e1e2f;
+        background-color: #ffffff;
         padding: 1.5rem;
         border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
         margin-bottom: 20px;
-        color: #ffffff;
+        color: #111827;
     }
     .summary-header {
         font-size: 22px;
@@ -1906,6 +1940,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
