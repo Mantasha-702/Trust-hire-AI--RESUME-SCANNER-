@@ -161,6 +161,23 @@ div[role="radiogroup"] label {
 </style>
 """, unsafe_allow_html=True)
 # ---------- END THEME ----------
+
+st.markdown("""
+<style>
+
+[data-testid="stDataFrame"] {
+    background-color: white !important;
+    border-radius: 10px;
+}
+
+[data-testid="stDataFrame"] table {
+    background-color: white !important;
+    color: black !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 st.markdown("""
 <style>
 
@@ -1341,7 +1358,7 @@ def show_chatbot():
 
                 if "Interview Score" in df.columns:
                     sorted_df = df.sort_values("Interview Score", ascending=False)
-                    answer = sorted_df.head(5).to_string(index=False)
+                    answer = sorted_df.head(5)
                 else:
                     answer = "Interview Score column not found."
 
@@ -1350,7 +1367,7 @@ def show_chatbot():
 
                 if "Interview Score" in df.columns:
                     sorted_df = df.sort_values("Interview Score")
-                    answer = sorted_df.head(5).to_string(index=False)
+                    answer = sorted_df.head(5)
                 else:
                     answer = "Interview Score column not found."
 
@@ -1359,7 +1376,7 @@ def show_chatbot():
 
                 if "Interview Score" in df.columns:
                     sorted_df = df.sort_values("Interview Score", ascending=False)
-                    answer = sorted_df.to_string(index=False)
+                    answer = sorted_df
                 else:
                     answer = "Interview Score column not found."
 
@@ -1373,14 +1390,14 @@ def show_chatbot():
                     if "more than" in q or "greater than" in q:
                         if numbers:
                             filtered = df[df["Experience"] > numbers[0]]
-                            answer = filtered.to_string(index=False)
+                            answer = filtered
                         else:
                             answer = "Please specify years."
 
                     elif "less than" in q:
                         if numbers:
                             filtered = df[df["Experience"] < numbers[0]]
-                            answer = filtered.to_string(index=False)
+                            answer = filtered
                         else:
                             answer = "Please specify years."
 
@@ -1389,10 +1406,10 @@ def show_chatbot():
                             (df["Experience"] >= numbers[0]) &
                             (df["Experience"] <= numbers[1])
                         ]
-                        answer = filtered.to_string(index=False)
+                        answer = filtered
 
                     else:
-                        answer = df[["Name", "Experience"]].to_string(index=False)
+                        answer = df[["Name", "Experience"]]
 
             # -------------------- Skill Filtering --------------------
             elif detected_skills:
@@ -1401,7 +1418,7 @@ def show_chatbot():
                 filtered = df[df["Skills"].str.contains(pattern, case=False, na=False)]
 
                 if not filtered.empty:
-                    answer = filtered.to_string(index=False)
+                    answer = filtered
                 else:
                     answer = "No candidates found with that skill."
 
@@ -1409,13 +1426,13 @@ def show_chatbot():
             elif detected_locations:
 
                 filtered = df[df["Location"].isin(detected_locations)]
-                answer = filtered.to_string(index=False)
+                answer = filtered
 
             # -------------------- Score Queries --------------------
             elif "score" in q:
 
                 if "Interview Score" in df.columns:
-                    answer = df[["Name", "Interview Score"]].to_string(index=False)
+                    answer = df[["Name", "Interview Score"]]
                 else:
                     answer = "Interview Score column not found."
 
@@ -1427,13 +1444,13 @@ def show_chatbot():
                     if col in df.columns:
                         columns.append(col)
 
-                answer = df[columns].to_string(index=False)
+                answer = df[columns]
 
             # -------------------- Education --------------------
             elif "education" in q or "qualification" in q:
 
                 if "Education" in df.columns:
-                    answer = df[["Name", "Education"]].to_string(index=False)
+                    answer = df[["Name", "Education"]]
                 else:
                     answer = "Education column not found."
 
@@ -1461,17 +1478,21 @@ def show_chatbot():
 
         st.session_state.chat_history.append(("Bot", answer))
 
-    # -------------------- Display Chat (Recent First Below Input) --------------------
+    # -------------------- Display Chat --------------------
     if st.session_state.chat_history:
-
         st.markdown("### 💬 Chat History")
-
-        for sender, message in reversed(st.session_state.chat_history):
+        for sender, message in st.session_state.chat_history:
             if sender == "You":
                 st.markdown(f"**🧑 You:** {message}")
             else:
                 st.markdown("**🤖 Bot:**")
-                st.text(message)
+
+            import pandas as pd
+
+            if isinstance(message, pd.DataFrame):
+                st.dataframe(message, use_container_width=True)
+            else:
+                st.write(message)
 
     # -------------------- Clear Chat --------------------
     if st.button("🧹 Clear Chat"):
@@ -1999,6 +2020,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
