@@ -38,75 +38,59 @@ st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
 st.markdown("""
 <style>
 
-/* Main App Background */
+/* App background */
 .stApp {
     background-color: #f3f4f6;
 }
 
-/* All Streamlit Containers */
-div[data-testid="stVerticalBlock"] > div {
-    background-color: #ffffff;
-    padding: 15px;
-    border-radius: 12px;
-}
-
 /* File uploader */
 div[data-testid="stFileUploader"] {
-    background-color: #ffffff !important;
+    background: white;
     border-radius: 12px;
-    padding: 10px;
 }
 
-/* Selectbox (Select Candidate / Select Job Role) */
-div[data-testid="stSelectbox"] {
-    background-color: #ffffff !important;
+/* Select boxes */
+div[data-testid="stSelectbox"] > div {
+    background: white;
     border-radius: 10px;
 }
 
 /* Time input */
-div[data-testid="stTimeInput"] {
-    background-color: #ffffff !important;
-    border-radius: 10px;
+div[data-testid="stTimeInput"] > div {
+    background: white;
 }
 
 /* Date input */
-div[data-testid="stDateInput"] {
-    background-color: #ffffff !important;
-    border-radius: 10px;
+div[data-testid="stDateInput"] > div {
+    background: white;
 }
 
-/* Tables (Extracted Data / Ranking Table) */
+/* Tables */
 div[data-testid="stDataFrame"] {
-    background-color: #ffffff !important;
-    border-radius: 12px;
-}
-
-/* Buttons */
-button[kind="primary"] {
+    background: white;
     border-radius: 10px;
 }
 
-/* Expander */
-details {
-    background-color: #ffffff !important;
+/* Expanders */
+div[data-testid="stExpander"] {
+    background: white;
     border-radius: 10px;
 }
 
 /* Text areas */
 textarea {
-    background-color: #ffffff !important;
+    background: white !important;
     color: #111827 !important;
 }
 
 /* Inputs */
 input {
-    background-color: #ffffff !important;
+    background: white !important;
     color: #111827 !important;
 }
 
 </style>
 """, unsafe_allow_html=True)
-
 # ---------- TRUSTHIRE PROFESSIONAL THEME ----------
 st.markdown("""
 <style>
@@ -2015,6 +1999,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
