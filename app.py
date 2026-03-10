@@ -982,13 +982,13 @@ def show_send_emails():
         "📄 Email Body (Use {name}, {role}, {date}, {time})",
         """Dear {name},
 
-We are pleased to invite you for an interview for the {role} position.
+    We are pleased to invite you for an interview for the {role} position.
 
-📅 Date: {date}
-⏰ Time: {time}
+    Date: {date}
+    Time: {time}
 
-Best Regards,
-TrustHire Team"""
+    Best Regards,
+    TrustHire Team"""
     )
 
     attach_resume = st.checkbox("📎 Attach Resume PDF (if available)")
@@ -1940,6 +1940,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
