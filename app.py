@@ -31,6 +31,77 @@ import requests
 import plotly.graph_objects as go
 import os
 
+# ---------- TRUSTHIRE PROFESSIONAL THEME ----------
+st.markdown("""
+<style>
+
+/* Global text color fix */
+html, body, [class*="css"] {
+    color: #1f2937 !important;
+}
+
+/* Headings */
+h1, h2, h3, h4 {
+    color: #111827 !important;
+    font-weight: 700;
+}
+
+/* Subtext */
+p, span, label {
+    color: #374151 !important;
+}
+
+/* Buttons */
+.stButton > button {
+    background: linear-gradient(135deg,#4f8bf9,#3b6eea);
+    color: white !important;
+    border-radius: 10px;
+    border: none;
+    padding: 0.5rem 1.2rem;
+    font-weight: 600;
+}
+
+/* Button hover */
+.stButton > button:hover {
+    background: linear-gradient(135deg,#3b6eea,#2d5bd1);
+}
+
+/* Tabs */
+.stTabs [data-baseweb="tab"] {
+    font-weight: 600;
+    color: #374151 !important;
+}
+
+/* Selected tab */
+.stTabs [aria-selected="true"] {
+    color: #2563eb !important;
+}
+
+/* Input fields */
+input, textarea {
+    color: #111827 !important;
+}
+
+/* Cards / containers */
+.block-container {
+    padding-top: 2rem;
+}
+
+/* Warning and info boxes */
+.stAlert {
+    color: #111827 !important;
+}
+
+/* Radio / navigation text */
+div[role="radiogroup"] label {
+    color: #111827 !important;
+    font-weight: 500;
+}
+
+</style>
+""", unsafe_allow_html=True)
+# ---------- END THEME ----------
+
 # 🌈 Page Setup (MUST be first Streamlit command)
 st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
 st.markdown("""
@@ -1833,6 +1904,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
