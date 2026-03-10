@@ -864,6 +864,8 @@ def show_future_skills():
             color: #374151;
             font-size: 14px;
         }
+        </style>
+        """, unsafe_allow_html=True)
         # ---------- Display Cards ----------
     if future_suggestions:
 
@@ -1443,21 +1445,22 @@ def show_voice_summary():
         margin-bottom: 20px;
         color: #111827;
     }
+
     .summary-header {
         font-size: 22px;
         font-weight: bold;
         color: #f39c12;
         margin-bottom: 10px;
     }
+
     .summary-textarea textarea {
-        background-color: #2c2c3e !important;
-        color: white !important;
+        background-color: #ffffff !important;
+        color: #111827 !important;
         font-size: 15px !important;
         line-height: 1.6 !important;
     }
     </style>
-    """, unsafe_allow_html=True)
-
+    """, unsafe_allow_html=True)    
     st.subheader("🎤 Voice Summary of Best Resume")
 
     # -------------------- Get Best Candidate --------------------
@@ -1940,6 +1943,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
