@@ -31,6 +31,10 @@ import requests
 import plotly.graph_objects as go
 import os
 
+
+# 🌈 Page Setup (MUST be first Streamlit command)
+st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
+
 # ---------- TRUSTHIRE PROFESSIONAL THEME ----------
 st.markdown("""
 <style>
@@ -102,8 +106,6 @@ div[role="radiogroup"] label {
 """, unsafe_allow_html=True)
 # ---------- END THEME ----------
 
-# 🌈 Page Setup (MUST be first Streamlit command)
-st.set_page_config(page_title="TrustHire - AI Resume Scanner", layout="wide")
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&display=swap');
@@ -1904,6 +1906,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
