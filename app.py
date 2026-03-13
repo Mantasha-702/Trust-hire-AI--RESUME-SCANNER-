@@ -358,9 +358,13 @@ if "page" not in st.session_state:
 
 
 # 📍 Path Configuration
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-POPPLER_PATH = r"C:\Program Files (x86)\poppler-24.08.0\Library\bin"
-
+if os.name == "nt":
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    POPPLER_PATH = r"C:\Program Files (x86)\poppler-24.08.0\Library\bin"
+else:
+    pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
+    POPPLER_PATH = "/usr/bin"
+    
 # ✅ Background image as base64
 def get_base64_image(image_path):
     with open(image_path, "rb") as img_file:
@@ -2020,6 +2024,7 @@ elif page == "Chatbot":
 
 elif page == "Voice Summary":
     show_voice_summary()
+
 
 
 
