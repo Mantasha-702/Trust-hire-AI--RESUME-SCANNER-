@@ -3,8 +3,8 @@ import pandas as pd
 import pytesseract
 from gtts import gTTS
 from io import BytesIO
-import re
-import fitz  # PyMuPDF
+import re    
+import fitz  # PyMuPDFf
 from pdf2image import convert_from_bytes
 from fuzzywuzzy import process
 from googletrans import Translator
@@ -484,6 +484,7 @@ if not st.session_state.get("authenticated", False):
 
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
+
 def show_dashboard():
 
     st.header("📊 Dashboard Overview")
@@ -529,9 +530,7 @@ def show_dashboard():
     shortlisted = len(df[df["Interview Score"] >= 70])
 
     try:
-        top_candidate = df.loc[
-            df["Interview Score"].idxmax()
-        ]["Name"]
+        top_candidate = df.loc[df["Interview Score"].idxmax()]["Name"]
     except:
         top_candidate = "N/A"
 
@@ -541,14 +540,14 @@ def show_dashboard():
     col1, col2, col3, col4 = st.columns(4)
 
     col1.metric("👥 Total Candidates", total_candidates)
-    col2.metric("⭐ Avg Score", f"{avg_score}%")
-    col3.metric("🎯 Shortlisted (70%+)", shortlisted)
-    col4.metric("🏆 Top Candidate", top_candidate)
+    col2.metric("⭐ Average Interview Score", f"{avg_score}%")
+    col3.metric("🎯 Shortlisted Candidates (70%+)", shortlisted)
+    col4.metric("🏆 Top Performing Candidate", top_candidate)
 
     st.markdown("---")
 
     # ==================================================
-    # 📊 2x2 ANALYTICS GRID
+    # 📊 ANALYTICS GRID
     # ==================================================
 
     col1, col2 = st.columns(2)
@@ -578,16 +577,21 @@ def show_dashboard():
 
         fig_bar = go.Figure(go.Bar(
             x=list(score_bins.keys()),
-            y=list(score_bins.values())
+            y=list(score_bins.values()),
+            marker_color="#2563EB"
         ))
 
         fig_bar.update_layout(
-            title="📈 Match Score Distribution",
+            title={
+                "text": "📈 Candidate Score Distribution",
+                "x": 0.5
+            },
+            xaxis_title="Score Range",
+            yaxis_title="Number of Candidates",
             template="plotly_white",
-            paper_bgcolor="white",      # background of container
-            plot_bgcolor="white",       # background of plot area
-            font=dict(color="black") 
-
+            paper_bgcolor="white",
+            plot_bgcolor="white",
+            font=dict(color="black")
         )
 
         st.plotly_chart(fig_bar, use_container_width=True)
@@ -604,16 +608,21 @@ def show_dashboard():
         fig_line.add_trace(go.Scatter(
             x=sorted_df["Name"],
             y=sorted_df["Interview Score"],
-            mode="lines+markers"
+            mode="lines+markers",
+            line=dict(color="#2563EB")
         ))
 
         fig_line.update_layout(
-            title="📊 Candidate Score Trend",
+            title={
+                "text": "📊 Candidate Interview Score Trend",
+                "x": 0.5
+            },
+            xaxis_title="Candidate Name",
+            yaxis_title="Interview Score",
             template="plotly_white",
-            paper_bgcolor="white",      # background of container
-            plot_bgcolor="white",       # background of plot area
-            font=dict(color="black") 
-
+            paper_bgcolor="white",
+            plot_bgcolor="white",
+            font=dict(color="black")
         )
 
         st.plotly_chart(fig_line, use_container_width=True)
@@ -634,6 +643,7 @@ def show_dashboard():
             missing = df["Skills"].apply(
                 lambda x: skill.lower() not in str(x).lower()
             ).sum()
+
             skill_missing[skill] = missing
 
         sorted_missing = sorted(
@@ -648,16 +658,21 @@ def show_dashboard():
         fig_skills = go.Figure(go.Bar(
             x=skill_counts,
             y=skill_names,
-            orientation="h"
+            orientation="h",
+            marker_color="#2563EB"
         ))
 
         fig_skills.update_layout(
-            title="🔥 Top Missing Skills",
+            title={
+                "text": "🔥 Top Missing Skills in Candidates",
+                "x": 0.5
+            },
+            xaxis_title="Number of Candidates Missing Skill",
+            yaxis_title="Skill",
             template="plotly_white",
-            paper_bgcolor="white",      # background of container
-            plot_bgcolor="white",       # background of plot area
-            font=dict(color="black") 
-
+            paper_bgcolor="white",
+            plot_bgcolor="white",
+            font=dict(color="black")
         )
 
         st.plotly_chart(fig_skills, use_container_width=True)
@@ -676,16 +691,17 @@ def show_dashboard():
         )])
 
         fig_pie.update_layout(
-            title="📊 Candidate Distribution by Role",
+            title={
+                "text": "📊 Candidate Distribution by Job Role",
+                "x": 0.5
+            },
             template="plotly_white",
-            paper_bgcolor="white",      # background of container
-            plot_bgcolor="white",       # background of plot area
-            font=dict(color="black") 
+            paper_bgcolor="white",
+            plot_bgcolor="white",
+            font=dict(color="black")
         )
 
         st.plotly_chart(fig_pie, use_container_width=True)
-
-
 def show_filter_resumes():
 
     st.header("📂 Resume Upload & Filtering")
@@ -697,9 +713,14 @@ def show_filter_resumes():
         accept_multiple_files=True
     )
 
-    if not uploaded_files:
+    if not uploaded_files and ("df" not in st.session_state or st.session_state.df.empty):
         st.info("📥 Please upload resumes to begin filtering and email features.")
         return
+    # If resumes already processed earlier, load them
+    if "df" in st.session_state and not st.session_state.df.empty:
+        df = st.session_state.df.copy()
+    else:
+        df = pd.DataFrame()
 
     # -------------------- Process only new files --------------------
     if "processed_files" not in st.session_state:
